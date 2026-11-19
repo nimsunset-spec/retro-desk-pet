@@ -13,6 +13,10 @@ dependencies = [
     "Pillow>=10.0",
     "psutil>=5.9",
     "PyGetWindow>=0.0.9",
+]
+
+[project.optional-dependencies]
+training = [
     "torch>=2.2",
     "scikit-learn>=1.4",
 ]

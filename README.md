@@ -24,35 +24,35 @@ The PyTorch network is initialized and trained from scratch. To keep normal star
 
 ## Setup
 
-### Install from GitHub
+### Windows: standalone app (no Python required)
 
-Install Python 3.10 or newer and `pipx` once. If `pipx` is not installed yet:
+Download and run the latest Windows bundle from [GitHub Releases](https://github.com/nimsunset-spec/retro-desk-pet/releases/latest). Extract the ZIP, then double-click `RetroDeskPet.exe`.
 
-Windows:
+To install it from PowerShell and launch it immediately:
 
 ```powershell
-py -m pip install --user pipx
-py -m pipx ensurepath
+$install = Join-Path $env:LOCALAPPDATA "Programs\RetroDeskPet"
+$zip = Join-Path $env:TEMP "RetroDeskPet-windows-x64.zip"
+Invoke-WebRequest "https://github.com/nimsunset-spec/retro-desk-pet/releases/latest/download/RetroDeskPet-windows-x64.zip" -OutFile $zip
+Expand-Archive -LiteralPath $zip -DestinationPath $install -Force
+Start-Process (Join-Path $install "RetroDeskPet.exe")
 ```
 
-Linux:
+For later launches, run:
 
-```bash
-python3 -m pip install --user pipx
-python3 -m pipx ensurepath
+```powershell
+& "$env:LOCALAPPDATA\Programs\RetroDeskPet\RetroDeskPet.exe"
 ```
 
-Restart the terminal if `pipx ensurepath` asks you to, then install and launch:
+This bundle includes its Python runtime and lightweight offline dialogue fallback. It does not include the optional PyTorch training/inference stack. The first public Windows bundle is produced by the tagged GitHub Actions release workflow. The executable is unsigned, so Windows may show a publisher warning.
 
-```bash
+### Install from GitHub with pipx
+
+This alternative installs the Python app into an isolated environment. It needs Python and Git, but does not install the optional PyTorch/scikit-learn training stack:
+
+```powershell
 pipx install https://github.com/nimsunset-spec/retro-desk-pet/archive/refs/heads/main.zip
 retro-pet
-```
-
-The install includes the sprites, local dialogue data, and trained model. No manual repository clone or separate sprite/model generation step is needed. The first install downloads Python dependencies, including PyTorch, so it may take a few minutes. To update later:
-
-```bash
-pipx upgrade retro-desk-pet
 ```
 
 ### Run from a development checkout
@@ -66,7 +66,7 @@ python -m pip install -r requirements.txt
 python main.py
 ```
 
-On Linux, activate with `source .venv/bin/activate` and use the same Python commands. To regenerate sprites or retrain the local model, run `python assets\generate_sprites.py` or `python brain\train.py` on Windows, and use `/` separators on Linux.
+On Linux, activate with `source .venv/bin/activate` and use the same Python commands. `requirements.txt` includes the optional training dependencies. To regenerate sprites or retrain the local model, run `python assets\generate_sprites.py` or `python brain\train.py` on Windows, and use `/` separators on Linux.
 
 A desktop session is required for the transparent overlay. Some Linux window managers do not expose active-window titles; the monitor reports that telemetry as unavailable when the platform does not provide it.
 
