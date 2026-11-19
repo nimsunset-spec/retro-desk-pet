@@ -18,24 +18,57 @@ A tiny, fully offline desktop companion built with Python and PyQt6. The pet flo
 
 ## Privacy and offline operation
 
-The application makes no API calls and downloads no language model. Training uses only `brain/dataset.json` and locally simulated telemetry. All conversations and pet stats remain in the local SQLite database at `data/pet.sqlite3`.
+The application makes no API calls and downloads no language model. Training uses only `brain/dataset.json` and locally simulated telemetry. Conversations and pet stats remain in a local SQLite database on the user's device.
 
 The PyTorch network is initialized and trained from scratch. To keep normal startup lightweight, the engine loads it only when `brain/model.pt` exists; without that checkpoint it uses the local TF-IDF fallback.
 
 ## Setup
 
-Use Python 3.10 or newer. From the project directory:
+### Install from GitHub
+
+Install Python 3.10 or newer and `pipx` once. If `pipx` is not installed yet:
+
+Windows:
+
+```powershell
+py -m pip install --user pipx
+py -m pipx ensurepath
+```
+
+Linux:
+
+```bash
+python3 -m pip install --user pipx
+python3 -m pipx ensurepath
+```
+
+Restart the terminal if `pipx ensurepath` asks you to, then install and launch:
+
+```bash
+pipx install https://github.com/nimsunset-spec/retro-desk-pet/archive/refs/heads/main.zip
+retro-pet
+```
+
+The install includes the sprites, local dialogue data, and trained model. No manual repository clone or separate sprite/model generation step is needed. The first install downloads Python dependencies, including PyTorch, so it may take a few minutes. To update later:
+
+```bash
+pipx upgrade retro-desk-pet
+```
+
+### Run from a development checkout
+
+Use Python 3.10 or newer from the project directory:
 
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install -r requirements.txt
-python assets\generate_sprites.py
-python brain\train.py
 python main.py
 ```
 
-On Linux, activate with `source .venv/bin/activate` and use the same Python commands. A desktop session is required for the transparent overlay. Some Linux window managers do not expose active-window titles; the monitor reports that telemetry as unavailable when the platform does not provide it.
+On Linux, activate with `source .venv/bin/activate` and use the same Python commands. To regenerate sprites or retrain the local model, run `python assets\generate_sprites.py` or `python brain\train.py` on Windows, and use `/` separators on Linux.
+
+A desktop session is required for the transparent overlay. Some Linux window managers do not expose active-window titles; the monitor reports that telemetry as unavailable when the platform does not provide it.
 
 ## Architecture
 
@@ -51,7 +84,7 @@ brain/engine.py         Inference, emotional dialogue, and response generation
 assets/generate_sprites.py  Local transparent pixel-art sprite generation
 ```
 
-The generated sprite PNGs and trained `brain/model.pt` are local runtime artifacts. They can be recreated at any time using the commands above.
+The installed app stores its SQLite database in the current user's application-data folder (`%LOCALAPPDATA%\RetroDeskPet` on Windows, or `$XDG_DATA_HOME/retro-desk-pet` on Linux; the default Linux base is `~/.local/share`). Existing `data/pet.sqlite3` files remain in use when running directly from a source checkout.
 
 ## Notes
 

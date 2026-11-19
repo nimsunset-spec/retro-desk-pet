@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import re
 import sqlite3
 import time
@@ -21,7 +22,24 @@ class PetMemory:
 
     def __init__(self, database_path: str | Path | None = None, pet_name: str = "Pixel") -> None:
         if database_path is None:
-            database_path = Path(__file__).resolve().parent.parent / "data" / "pet.sqlite3"
+            source_database = Path(__file__).resolve().parent.parent / "data" / "pet.sqlite3"
+            if source_database.is_file():
+                database_path = source_database
+            elif os.name == "nt":
+                data_home = os.environ.get("LOCALAPPDATA") or os.environ.get("APPDATA")
+                database_path = (
+                    Path(data_home) / "RetroDeskPet" / "pet.sqlite3"
+                    if data_home
+                    else Path.home() / "AppData" / "Local" / "RetroDeskPet" / "pet.sqlite3"
+                )
+            else:
+                data_home = os.environ.get("XDG_DATA_HOME")
+                database_root = (
+                    Path(data_home).expanduser()
+                    if data_home
+                    else Path.home() / ".local" / "share"
+                )
+                database_path = database_root / "retro-desk-pet" / "pet.sqlite3"
         self.database_path = Path(database_path).expanduser().resolve()
         self.database_path.parent.mkdir(parents=True, exist_ok=True)
         self._initialize(pet_name)
