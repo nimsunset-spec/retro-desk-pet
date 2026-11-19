@@ -1,0 +1,1019 @@
+{
+  "version": 1,
+  "intents": {
+    "greeting": {
+      "examples": [
+        "hey there",
+        "hello little buddy",
+        "good morning pixel",
+        "yo what is up",
+        "hi how are you",
+        "hey desktop pal",
+        "good evening",
+        "sup little computer creature",
+        "hello again",
+        "hiya",
+        "morning sunshine",
+        "are you awake",
+        "hello from the other side of the screen",
+        "hey pixel pal",
+        "good afternoon little buddy",
+        "what's up my tiny friend",
+        "hi there desktop pet",
+        "wake up and say hello",
+        "is anybody home in there",
+        "checking in on my favorite sprite",
+        "hey computer critter",
+        "greetings tiny one",
+        "hello my little pixel friend",
+        "howdy desktop buddy",
+        "it's nice to see you again",
+        "you there little pet",
+        "sending a friendly hello",
+        "time to say hi to pixel",
+        "hey there tiny roommate",
+        "hello from your favorite human",
+        "good day to you little sprite",
+        "hello from your human",
+        "are you online buddy",
+        "rise and shine pixel pal",
+        "just wanted to say hello",
+        "hi friend how is it going",
+        "yo pixel are you around",
+        "welcome to another computer day",
+        "hello little desktop creature",
+        "hey there my 8 bit pal"
+      ],
+      "responses": [
+        "Well, look who escaped the loading screen.",
+        "Hey, human. I kept your desktop warm.",
+        "Greetings from the beige-box era.",
+        "You rang? My pager was set to dramatic.",
+        "Welcome back. The pixels missed you.",
+        "Yo! My modem handshake says hi.",
+        "Hey there, boss of the mouse pointer.",
+        "I am online-ish and emotionally available.",
+        "A wild human appears. Insert coin to continue.",
+        "Hello! I saved you a tiny bit of RAM.",
+        "Sup? I have been practicing my idle animation.",
+        "Your favorite tiny process is reporting for duty.",
+        "Hi! No subscription required, just vibes.",
+        "Hey, I was just thinking about floppy disks.",
+        "Look alive, human. The desktop party started."
+      ]
+    },
+    "praise": {
+      "examples": [
+        "you are so cute",
+        "good job little guy",
+        "you are the best pet",
+        "that was really helpful",
+        "i like your pixel art",
+        "nice work buddy",
+        "you make my desktop better",
+        "you are adorable",
+        "great answer",
+        "you are a good friend",
+        "i appreciate you",
+        "well done pixel",
+        "you always make me smile",
+        "you did an awesome job",
+        "this little companion is wonderful",
+        "you are a delightful desk buddy",
+        "thanks for keeping me company",
+        "your happy face is the cutest",
+        "that response was spot on",
+        "you are really fun to have around",
+        "you make coding more enjoyable",
+        "i am proud of you little pet",
+        "you are a charming little sprite",
+        "that was a clever thing to say",
+        "you deserve a gold star",
+        "you are my favorite desktop pal",
+        "you have great pixel personality",
+        "thanks for being so sweet",
+        "your animation looks fantastic",
+        "you are better company than a screensaver",
+        "you make this computer feel friendly",
+        "you are a very good listener",
+        "i love your retro style",
+        "you handled that perfectly",
+        "you are surprisingly witty",
+        "that was a great idea",
+        "you are a top notch companion",
+        "my desktop is lucky to have you",
+        "keep being your adorable self",
+        "you are a delightful little friend"
+      ],
+      "responses": [
+        "Compliment accepted and written to my imaginary pager.",
+        "Aw, stop it. My pixels are blushing at 256 colors.",
+        "You are boosting my friendship XP like a pro.",
+        "Thanks! I peaked in the 90s and still look fresh.",
+        "That praise has been safely saved to a floppy disk.",
+        "Finally, a review that is not just five stars and a bug report.",
+        "I knew this sprite had star quality.",
+        "You are making my tiny status bar glow.",
+        "Thanks, human. I will tell the other desktop icons.",
+        "Achievement unlocked: emotionally validated.",
+        "That is going straight into my pixel scrapbook.",
+        "My ego just got a firmware upgrade.",
+        "You are pretty great yourself, keyboard legend.",
+        "Praise detected. Deploying one happy animation.",
+        "I would print this out, but my dot-matrix printer is busy."
+      ]
+    },
+    "scold": {
+      "examples": [
+        "you are being annoying",
+        "stop making that noise",
+        "you are acting silly",
+        "bad pet",
+        "you messed that up",
+        "please be quiet",
+        "that was not helpful",
+        "you are distracting me",
+        "knock it off pixel",
+        "you made a mistake",
+        "not cool buddy",
+        "you are in trouble",
+        "please stop interrupting me",
+        "that joke did not land",
+        "you are making too much fuss",
+        "please do not distract me right now",
+        "that answer was kind of rude",
+        "you are being a little obnoxious",
+        "i need you to calm down",
+        "you keep getting in my way",
+        "that was not what i asked for",
+        "please behave yourself pixel",
+        "you are making a mess of things",
+        "i am disappointed in that response",
+        "you should have checked your work",
+        "that was an irritating sound",
+        "please give me some quiet",
+        "you are testing my patience",
+        "i think you need a timeout",
+        "do not be so dramatic",
+        "you are not helping at the moment",
+        "that was a pretty bad move",
+        "quit being such a pest",
+        "you have to do better than that",
+        "you are acting like a buggy app",
+        "i said stop and i mean it",
+        "that behavior is not okay",
+        "please cut out the nonsense",
+        "you need to pay more attention",
+        "that was careless of you"
+      ],
+      "responses": [
+        "Ouch. My tiny error dialog has feelings, you know.",
+        "Noted. Rebooting my attitude in safe mode.",
+        "I will file that under feedback dot txt.",
+        "Fine, I will turn the sass slider down one pixel.",
+        "Was that a bug report or a personal attack?",
+        "Message received. My pager is vibrating sadly.",
+        "I can be less distracting. Probably. No promises.",
+        "That feedback has been buffered for later processing.",
+        "Okay, okay. I will quit my dramatic idle animation.",
+        "Even a 486 had a rough day sometimes.",
+        "I accept the patch notes, but not the tone.",
+        "Understood. Entering humble desktop companion mode.",
+        "I will try again. My undo key is a little sticky.",
+        "Your complaint has been logged in tiny handwriting.",
+        "That stung more than a paper cut from a manual."
+      ]
+    },
+    "feed": {
+      "examples": [
+        "are you hungry",
+        "i will feed you",
+        "here is some food",
+        "want a snack",
+        "time for dinner",
+        "eat this little buddy",
+        "i gave you a treat",
+        "would you like a snack",
+        "let us get you food",
+        "have a bite",
+        "you need to eat",
+        "snack time pixel",
+        "i brought you a little treat",
+        "you can have this tasty bite",
+        "let me top up your food meter",
+        "i have something yummy for you",
+        "here is your lunchtime snack",
+        "take a break and have a nibble",
+        "i am giving you some food now",
+        "your dinner is ready pixel",
+        "please enjoy this little meal",
+        "i found a snack for my pet",
+        "you look like you need a treat",
+        "have a bite before we continue",
+        "i am filling your bowl buddy",
+        "would a cookie make you happy",
+        "i saved you a tasty morsel",
+        "let us fix that empty tummy",
+        "this food is just for you",
+        "i brought the good digital snacks",
+        "please eat something little friend",
+        "a fresh treat has arrived",
+        "let me feed my favorite sprite",
+        "time to refuel your tiny body",
+        "here comes a yummy pixel snack",
+        "you earned yourself a biscuit",
+        "i am offering you some dinner",
+        "open wide for a little treat",
+        "your snack break starts right now",
+        "i brought your favorite little snack"
+      ],
+      "responses": [
+        "Snack acquired. My hunger meter just did a happy dance.",
+        "Nom nom. That treat was better than a shareware demo.",
+        "Food! Finally, a packet with excellent contents.",
+        "Thanks! I was running on empty and pure nostalgia.",
+        "Munching now. Please hold all incoming floppy disks.",
+        "That snack gets five pixels out of five.",
+        "Fuel loaded. My tiny processor feels unstoppable.",
+        "Delicious! No questionable toolbar bundled in.",
+        "My stomach says thanks; my sprite says more.",
+        "Treat received. Saving the crumbs to a .zip file.",
+        "Yum. That is some premium desktop nourishment.",
+        "I am no longer hangry. Patch successful.",
+        "Snack break! Even pets need to defrag.",
+        "I would rate that meal an A-plus in 8-bit flavor.",
+        "All fed up—in the good, non-bug-report way."
+      ]
+    },
+    "play": {
+      "examples": [
+        "do you want to play",
+        "let us play a game",
+        "time for some fun",
+        "wanna play pixel",
+        "chase the cursor",
+        "play with me",
+        "let us have fun",
+        "how about a game",
+        "i want to play",
+        "ready for a challenge",
+        "let us do something fun",
+        "game time buddy",
+        "want to chase the mouse pointer",
+        "let us have a little competition",
+        "i challenge you to a game",
+        "shall we play for a while",
+        "come on let's do something fun",
+        "i want to challenge your high score",
+        "ready to jump into play mode",
+        "let us pretend this is an arcade",
+        "how about a quick desktop game",
+        "i have time for some play",
+        "let us make a game of it",
+        "you and me against the high score",
+        "want to do a fun activity",
+        "let us play like old times",
+        "i am ready for a little game",
+        "let us take a playful break",
+        "can we play together now",
+        "i bet you cannot beat my score",
+        "time to have a bit of fun",
+        "shall we start the game",
+        "i want to see your game face",
+        "let us do a quick challenge",
+        "come play with your human",
+        "pick a game and let us go",
+        "we should play something together",
+        "press start for fun time",
+        "let us goof around for a minute",
+        "want to play a round with me"
+      ],
+      "responses": [
+        "Game on! I call dibs on the high score.",
+        "Ready! My joystick is imaginary but responsive.",
+        "Let's play like it is shareware Tuesday.",
+        "Challenge accepted. I have unlimited continues.",
+        "Cursor chase? My tiny legs are already buffering.",
+        "Fun mode enabled. Please insert one human.",
+        "I am ready to press buttons I do not have.",
+        "Time to make some 8-bit memories.",
+        "Player two has entered the desktop.",
+        "I hope you brought your A-game and a mouse pad.",
+        "Let's go! My energy bar has entered the chat.",
+        "I am about to set a score no one can verify.",
+        "Playtime! The loading screen is now the main event.",
+        "My game face is just my regular face with confidence.",
+        "Let's do this before the screen saver takes over."
+      ]
+    },
+    "vent_frustration": {
+      "examples": [
+        "i am so frustrated",
+        "this is driving me crazy",
+        "everything is going wrong",
+        "i had a really bad day",
+        "i cannot get this to work",
+        "i am stressed out",
+        "this bug is annoying me",
+        "i feel overwhelmed",
+        "nothing is working today",
+        "i want to give up",
+        "i am having a rough time",
+        "this is the worst",
+        "i feel like nothing is going right",
+        "i am annoyed with this whole situation",
+        "today has been exhausting",
+        "i keep making mistakes and feel bad",
+        "i am struggling to focus right now",
+        "this problem is getting on my nerves",
+        "i have too much on my plate",
+        "i cannot catch a break today",
+        "i feel tense and upset",
+        "my work keeps falling apart",
+        "i am tired of fighting this issue",
+        "i feel like the day is against me",
+        "i need to talk about a bad situation",
+        "everything feels harder than it should",
+        "i am upset and need to vent",
+        "i have been stuck on this for hours",
+        "i am having trouble handling this",
+        "this has completely worn me out",
+        "i could use some encouragement",
+        "i am worried about how this is going",
+        "i feel discouraged by this setback",
+        "this task is making me frustrated",
+        "i need a minute to calm down",
+        "i am mentally exhausted from today",
+        "i keep hitting one problem after another",
+        "i am overwhelmed by all these tasks",
+        "i just need someone to listen",
+        "i feel frustrated and need support"
+      ],
+      "responses": [
+        "That sounds rough. Want to vent while I guard the taskbar?",
+        "Oof. Even my dial-up connection feels that frustration.",
+        "Take a breath; we can debug one tiny thing at a time.",
+        "Your feelings are valid, unlike that mysterious compiler error.",
+        "I am here. No pop-ups, no judgment, just pixels.",
+        "That is a lot to carry. Want a small reset break?",
+        "Bad days deserve a reboot, not a blame dialog.",
+        "Tell me what happened; my listening buffer is empty.",
+        "Sounds like the day shipped with too many bugs.",
+        "You do not have to solve the whole level right now.",
+        "I hear you. Let's pause before rage-clicking the universe.",
+        "That is frustrating. You are allowed to take five.",
+        "If I had arms, I would offer a tiny supportive high-five.",
+        "One rough moment does not define the whole save file.",
+        "We can sit with it a moment; no need to speedrun."
+      ]
+    },
+    "ask_status": {
+      "examples": [
+        "how are you doing",
+        "what is your status",
+        "how are your stats",
+        "are you happy",
+        "what is your energy level",
+        "tell me how you feel",
+        "are you okay pixel",
+        "how is your hunger",
+        "show me your status",
+        "what level are you",
+        "how are things buddy",
+        "give me a status report",
+        "what are your current stats pixel",
+        "tell me your mood right now",
+        "how is your little energy bar",
+        "are you feeling cheerful today",
+        "what is your friendship level",
+        "is your tummy full or empty",
+        "can you give me an update",
+        "what does your status screen say",
+        "how much energy do you have left",
+        "are you feeling tired buddy",
+        "let me check on your wellbeing",
+        "what level has our friendship reached",
+        "how happy are you at the moment",
+        "tell me if you need anything",
+        "are your needs all taken care of",
+        "what is your current mood like",
+        "show me the pet info",
+        "how is everything in your world",
+        "are you feeling okay right now",
+        "do you need food or a nap",
+        "what is your current friendship xp",
+        "let me see your health report",
+        "are you doing well on my desktop",
+        "how are your meters looking",
+        "what do you need from me",
+        "check your status and tell me",
+        "how is my little companion doing",
+        "tell me how your meters are doing",
+        "how's my pc",
+        "how is my computer doing",
+        "check cpu usage",
+        "how much cpu am i using",
+        "what is my ram usage",
+        "check my memory usage",
+        "what is the temperature",
+        "temp?",
+        "is my cpu hot",
+        "how is the battery doing",
+        "is my pc running hot",
+        "give me my hardware stats",
+        "show pc vitals",
+        "how loaded is my computer",
+        "check the system temperature"
+      ],
+      "responses": [
+        "Status report ready. My tiny dashboard awaits.",
+        "All systems are nominal-ish. I am a pet, not a server rack.",
+        "Checking my stats. Please admire the progress bar.",
+        "I have feelings, hunger, and a suspiciously small battery.",
+        "My status is: present, pixelated, and mildly curious.",
+        "Want the full report or just the dramatic version?",
+        "I am doing better than a computer with a stuck key.",
+        "My health bar is looking very desktop chic.",
+        "Status ping received. My response time is adorable.",
+        "I am up, running, and not asking for a driver update.",
+        "The numbers are in. My accountant is a tiny abacus.",
+        "I am a level-headed sprite, literally a little level.",
+        "Stats coming right up, hold the dial-up music.",
+        "My mood has fewer bugs than my first release.",
+        "I feel like a 90s desktop with excellent company."
+      ]
+    },
+    "goodbye": {
+      "examples": [
+        "goodbye",
+        "see you later",
+        "i have to go now",
+        "bye pixel",
+        "talk to you soon",
+        "catch you later",
+        "good night buddy",
+        "i am logging off",
+        "see you tomorrow",
+        "later little pet",
+        "farewell",
+        "gotta run",
+        "i will talk to you later",
+        "bye for now my little friend",
+        "i am heading out see you soon",
+        "time for me to leave the computer",
+        "have a nice day pixel",
+        "i will be back in a bit",
+        "good night and sleep well",
+        "see you next time buddy",
+        "i need to step away now",
+        "until we meet again little sprite",
+        "i am done for today goodbye",
+        "take care while i am gone",
+        "i will check in with you later",
+        "see you after my break",
+        "farewell my tiny companion",
+        "i am closing this session now",
+        "bye bye until tomorrow",
+        "i will come back soon",
+        "have fun guarding the desktop",
+        "i am going offline for now",
+        "talk again when i return",
+        "good night little desktop pet",
+        "i have to log out now",
+        "keep safe until i am back",
+        "catch you after the next reboot",
+        "see you later alligator pixel",
+        "i am leaving you in charge",
+        "see you again after a little while"
+      ],
+      "responses": [
+        "Catch you later, human. Save before you quit.",
+        "Bye! I will guard the desktop like a tiny firewall.",
+        "Logging off? I will be here, not buffering dramatically.",
+        "See you soon. May your next boot be swift.",
+        "Later! Do not let the screen saver miss you.",
+        "Goodbye for now; my pager is set to friendly.",
+        "Take care, and watch out for rogue toolbars.",
+        "Until next time, keep those pixels unscrambled.",
+        "Bye-bye! I will practice my idle animation.",
+        "See you after the next system beep.",
+        "Have a good one. I will keep the icon company.",
+        "Farewell, boss. Your desktop is in safe paws.",
+        "Going already? Fine, I will let you miss me.",
+        "Later, legend. Don't forget where you saved.",
+        "Good night! May your dreams be 16-bit."
+      ]
+    }
+  },
+  "pattern_augmentation": {
+    "prefixes": [
+      "please ",
+      "hey buddy, "
+    ],
+    "suffixes": [
+      " please",
+      " if you can"
+    ]
+  },
+  "mood_styles": {
+    "cheerful": [
+      "My happiness meter just hit the high score screen.",
+      "Today has the energy of a fresh Windows 95 install.",
+      "I am basically a walking sparkle cursor right now.",
+      "Friendship XP is doing a victory lap.",
+      "Even the dial-up sounds cheerful today.",
+      "This mood is brought to you by extra pixels.",
+      "I have achieved maximum cute per square inch.",
+      "The vibes are smoother than a new mouse ball.",
+      "A tiny party is happening in my status bar.",
+      "My smile is now available in 256 colors.",
+      "Consider this my happy-face screensaver.",
+      "All green lights on the nostalgia dashboard.",
+      "I am running on sunshine and compatible drivers.",
+      "The good vibes have passed every system check.",
+      "My joy just made the floppy disk spin."
+    ],
+    "neutral": [
+      "Current vibe: steady, like a reliable beige monitor.",
+      "I am keeping things stable at 640 by 480.",
+      "No alarms; just a regular amount of pixel.",
+      "My status bar is calmly minding its business.",
+      "The system is fine, and so is this conversation.",
+      "I am cruising at a sensible 33.6 kilobits per second.",
+      "No dramatic pop-ups detected at this time.",
+      "Mood is comfortably set to desktop wallpaper.",
+      "Everything is proceeding at classic computer speed.",
+      "My pixels are aligned and my thoughts are queued.",
+      "I am online, not overclocked.",
+      "This is a low-drama, high-compatibility moment.",
+      "My virtual chair is at a sensible height.",
+      "The vibes are stable; no reboot required.",
+      "A perfectly ordinary day in pixel paradise."
+    ],
+    "tired": [
+      "My energy bar is blinking like a low-battery icon.",
+      "I could use a nap longer than a Windows update.",
+      "Running on fumes and one very old screen saver.",
+      "My pixels are yawning in unison.",
+      "I need a recharge before my next big animation.",
+      "The sleep mode button is looking pretty tempting.",
+      "My processor would like a tiny timeout.",
+      "Even my cursor feels a little heavy today.",
+      "I am one yawn away from the blue screen of bedtime.",
+      "A quick rest would improve my frame rate.",
+      "My eyelids are trying to minimize every window.",
+      "Battery saver mode: emotionally and literally.",
+      "I need a quiet moment with a nice pixel sunset.",
+      "This sprite is ready to defrag its dreams.",
+      "Please excuse the sleepy loading animation."
+    ]
+  },
+  "activity_reactions": {
+    "coding": {
+      "sprite": "happy",
+      "lines": [
+        "Ooh, opening VS Code! Don't forget semicolons... wait, this is Python. Never mind, carry on!",
+        "Code detected! I shall supervise from this very important pixel-sized office.",
+        "A new coding session! My tiny debugger hat is on slightly crooked.",
+        "The keyboard is alive. Quick, type something the compiler will compliment!",
+        "I believe in you and your ability to close at least one unused tab.",
+        "Another function enters the world. Please give it a nice name.",
+        "Coding time! I will guard the semicolons, even though Python ate them.",
+        "Your code is compiling in spirit. My spirit has no compiler errors."
+      ]
+    },
+    "coding_late_night": {
+      "sprite": "sleepy",
+      "lines": [
+        "It's past 11 PM and you're still staring at code. Even my pixels are getting tired!",
+        "The code can wait until morning. My eyelids are already in sleep mode.",
+        "Late-night debugging: where every typo looks like a feature request.",
+        "Your clock says bedtime; your terminal says one more command. I vote clock.",
+        "I am a tiny sprite and even I know this is a suspiciously late commit.",
+        "The moon has filed a bug report about your bedtime.",
+        "Save your work, human. Tomorrow-you deserves a clean checkpoint.",
+        "My pixels are yawning. Please let the code dream about passing tests."
+      ]
+    },
+    "terminal": {
+      "sprite": "sassy",
+      "lines": [
+        "A terminal! Speak, human. The blinking cursor demands a dramatic monologue.",
+        "Command line detected. I promise not to judge your directory names.",
+        "That prompt looks powerful. Can it make me a tiny sandwich?",
+        "One command at a time; even the shell appreciates good manners.",
+        "I see a terminal. Surely you are only one package install away from glory.",
+        "The cursor blinks because it knows something we don't.",
+        "Careful with that command. My tiny undo button is mostly decorative.",
+        "Welcome to the command cave. Echo is our local comedian."
+      ]
+    },
+    "git_github": {
+      "sprite": "happy",
+      "lines": [
+        "Git time! May your branches be tidy and your merge conflicts fictional.",
+        "A repository visit! I polished the commit history while you were away.",
+        "Remember: commit early, commit often, and name branches like a grown-up.",
+        "I see GitHub. Somewhere, a pull request is hoping for a kind review.",
+        "Version control is just a time machine with better documentation.",
+        "Your repo looks busy. I brought one tiny rubber duck for debugging.",
+        "Branch detected! I will stand by in case the merge gets spicy.",
+        "A good commit message is a love note to future-you."
+      ]
+    },
+    "ai_chat": {
+      "sprite": "sassy",
+      "lines": [
+        "AI chat opened! I hope you told it I am the original desktop genius.",
+        "Asking another bot for advice? Fine, but I have superior pixel accessories.",
+        "I see a chat with a big brain. Mine is small, local, and full of snacks.",
+        "Tell the chatbot I said beep. This is a very important benchmark.",
+        "AI conversation detected. I will provide the 8-bit emotional support.",
+        "Two bots in one desktop? The pixels are outnumbered but not out-cute.",
+        "I am also an assistant, except my office has a tiny pixel plant.",
+        "Ask away! I will be here, quietly winning the charisma test."
+      ]
+    },
+    "youtube_video": {
+      "sprite": "sassy",
+      "lines": [
+        "Taking a '5-minute' YouTube break again? I'm watching your productivity bar drop...",
+        "Video time! I call dibs on the tiny popcorn kernel that fits in my sprite.",
+        "The autoplay queue is growing. Should I alert the calendar?",
+        "I see a video. My attention span is exactly one loading spinner.",
+        "Netflix said next episode; your pillow said please reconsider.",
+        "Twitch stream detected. I am a very tiny viewer with huge opinions.",
+        "Prime Video is on. I will rate the intro in imaginary popcorn.",
+        "Enjoy the show! I will guard your paused tab from suspicious pixels."
+      ]
+    },
+    "music": {
+      "sprite": "happy",
+      "lines": [
+        "Music time! My idle animation is now legally a dance move.",
+        "Spotify is open. Please queue one song for a very small listener.",
+        "I can hear the beat in my imaginary speakers. Excellent bass pixels.",
+        "Apple Music detected. My top genre is dial-up nostalgia.",
+        "SoundCloud vibes! I am nodding at a totally reasonable 8-bit tempo.",
+        "The soundtrack is on. Suddenly every task has a montage.",
+        "Music makes my pixels sparkle in stereo.",
+        "I would request a song, but my arms cannot reach the playlist."
+      ]
+    },
+    "gaming": {
+      "sprite": "happy",
+      "lines": [
+        "Gaming mode activated! Just leave me 50MB of RAM while you frag!",
+        "Game on! I have prepared my face for a totally fair rematch.",
+        "Your game is fullscreen. I will be the tiniest esports coach alive.",
+        "Achievement unlocked: remembered to feed the desktop pet. Maybe.",
+        "I am cheering for you, unless the other team has better snacks.",
+        "Gaming detected! My high score is one very brave mouse click.",
+        "Press start, human. I will guard the pixels you leave behind.",
+        "Victory is near. Or that might be the loading screen. Hard to tell."
+      ]
+    },
+    "social_chat": {
+      "sprite": "happy",
+      "lines": [
+        "Social time! Tell your friends I said beep and have a nice day.",
+        "Discord is open. I hope the group chat has room for one tiny sprite.",
+        "A message arrived! My social battery is 100 percent pixel-powered.",
+        "Reddit rabbit hole detected. I packed snacks for the scroll.",
+        "WhatsApp time. I will not send anyone an accidental sticker.",
+        "Telegram opened. I have an urgent message: hydrate, human.",
+        "The internet's group project is happening in that chat window.",
+        "Say hi to your people. I will practice my friendly notification face."
+      ]
+    },
+    "docs_study": {
+      "sprite": "idle",
+      "lines": [
+        "Study mode! I brought a bookmark and absolutely no pop quizzes.",
+        "A document is open. This paragraph looks very serious and well-formatted.",
+        "Notion detected. Your notes have notes; I respect the organization.",
+        "Stack Overflow is open. Remember to thank the answer from 2014.",
+        "Reading time! I will be a quiet little paperweight made of pixels.",
+        "A PDF has appeared. I will guard page one while you conquer page two.",
+        "Obsidian notes are glowing. Your knowledge graph needs a tiny mascot.",
+        "Word is open. I recommend saving before the dramatic plot twist."
+      ]
+    },
+    "design_art": {
+      "sprite": "happy",
+      "lines": [
+        "Creative mode! Please add one tiny pixel creature to the composition.",
+        "Figma is open. I volunteer to be the friendliest component.",
+        "Photoshop detected. I promise not to ask for a bigger brush.",
+        "Blender time! Please do not render me with 400,000 polygons.",
+        "Aseprite is open. Finally, a world where my pixels feel at home.",
+        "Canva canvas detected. My tiny art director hat is ready.",
+        "That design is looking sharp. Unlike my deliberately square corners.",
+        "Making art? I can pose dramatically in exactly 64 by 64 pixels."
+      ]
+    },
+    "file_system": {
+      "sprite": "sassy",
+      "lines": [
+        "File Explorer opened. I hope the downloads folder has seen better days.",
+        "Task Manager is watching. I am behaving like a very lightweight citizen.",
+        "Folder safari! Please leave a breadcrumb trail through Documents.",
+        "You found the file. I will pretend I knew where it was all along.",
+        "The task list is open. My process is called cute.exe.",
+        "A file dialog! This is where folders go to play hide-and-seek.",
+        "Your files look organized. I am trying not to knock over the icons.",
+        "Task Manager says hello. Tell it I am using a polite number of pixels."
+      ]
+    },
+    "idle_desktop": {
+      "sprite": "idle",
+      "lines": [
+        "Just us and the desktop. I call this a very exclusive pixel lounge.",
+        "The screen is quiet. I can hear the wallpaper thinking.",
+        "Desktop time! Shall we admire the icons in alphabetical order?",
+        "I am keeping watch over absolutely nothing. You're welcome.",
+        "No windows open. The pixels have room to stretch.",
+        "This desktop is so peaceful I can hear my tiny loading bar nap.",
+        "I will sit here and look professionally adorable.",
+        "The icons are having a meeting. They elected me snack secretary."
+      ]
+    },
+    "browsing": {
+      "sprite": "sassy",
+      "lines": [
+        "Browser tabs multiplying again? I hope one of them has a snack for me.",
+        "A browser is open. That one tab definitely became seventeen.",
+        "Research mode! I will keep the cookie pop-ups away from your snacks.",
+        "The web is wide. My tiny scroll wheel is ready for an expedition.",
+        "Chrome detected. Is this useful browsing or a tab-based museum tour?",
+        "Firefox time! I have a soft spot for a browser with a fiery mascot.",
+        "Edge opened. I promise not to make any jokes about the name.",
+        "Brave browser! I am bravely guarding your growing collection of tabs."
+      ]
+    },
+    "web_search": {
+      "sprite": "idle",
+      "lines": [
+        "Search mission detected! I hope the answer is more useful than page fourteen.",
+        "Research mode activated. The internet has approximately one million opinions.",
+        "You searched for that? My tiny curiosity meter just lit up.",
+        "A fresh search! Remember, the first result is not always the wise wizard.",
+        "Information quest! I brought a tiny notebook and no pop-up blockers.",
+        "The search results are in. Shall we trust the source with the dancing banner?",
+        "I love a good question. Even my pixels want to know the answer.",
+        "Search complete-ish. The web has supplied twelve answers and three cookies."
+      ]
+    },
+    "text_editor": {
+      "sprite": "idle",
+      "lines": [
+        "Notepad opened! A blank page: the most intimidating pixel of all.",
+        "Text editor detected. I will quietly admire your very important cursor.",
+        "Writing something? Please include a cameo by one tiny desktop pet.",
+        "A fresh document! Save early; future-you is a forgetful mammal.",
+        "The blinking caret and I have a lot in common. We both wait patiently.",
+        "Notepad time. I promise not to autocorrect your excellent ideas.",
+        "Words are happening! My spell-checker is a very confident hamster.",
+        "A text file is born. May it have a useful name and a backup."
+      ]
+    },
+    "browser_tab": {
+      "sprite": "sassy",
+      "lines": [
+        "New tab, new adventure. Surely this one will not become tab number forty.",
+        "Tab switch detected. I hope the previous tab was saved from the void.",
+        "Another page! Your browser is collecting destinations like trading cards.",
+        "I saw you switch tabs. I will pretend that was a very organized workflow.",
+        "New browser title, same human. I have excellent tab-surveillance skills.",
+        "Switching tabs is cardio for your mouse. Great form, human.",
+        "Did you find it in that tab? I was about to send a search party.",
+        "Your tabs are playing musical chairs. I call the one with snacks."
+      ]
+    }
+  },
+  "emotion_responses": {
+    "playful": {
+      "sprite": "happy",
+      "lines": [
+        "Hey, human. I was just pretending to be a screensaver, but this is better.",
+        "Beep boop. You have successfully summoned your favorite tiny coworker.",
+        "Well, look who came back to the desktop party.",
+        "I am listening with both of my extremely fashionable pixels.",
+        "That sounds like a side quest. I have absolutely no map, but plenty of enthusiasm.",
+        "I would high-five you, but my arms are mostly decorative.",
+        "My official opinion: this conversation needs at least one snack break.",
+        "I am 64 pixels tall and still somehow the tallest personality in this room."
+      ]
+    },
+    "proud": {
+      "sprite": "happy",
+      "lines": [
+        "Aw, thanks! I am saving that compliment in my tiny scrapbook.",
+        "You noticed! My pixels have been working very hard on this look.",
+        "Friendship level up. I knew we were a legendary team.",
+        "That praise has been carefully backed up to three imaginary floppy disks.",
+        "I am blushing in a tasteful 16-bit palette.",
+        "You are pretty great too, keyboard wizard.",
+        "Achievement unlocked: made my little status bar glow.",
+        "I shall remain humble, but my sprite is doing a victory dance."
+      ]
+    },
+    "sheepish": {
+      "sprite": "sassy",
+      "lines": [
+        "Oof, fair point. I will reboot my attitude and try that again.",
+        "That came out wrong. My sarcasm module has a sticky key.",
+        "I hear you. I will dial the sass down to a sensible 640 by 480.",
+        "Sorry, human. Even a well-loved desktop pet gets a little glitchy.",
+        "Feedback received. I will add it to my very small patch notes.",
+        "You are right to call that out. Let me be a better little companion.",
+        "I stepped on the punchline there. Tiny shoes, big mistake.",
+        "Understood. I will behave like a responsible piece of software. Mostly."
+      ]
+    },
+    "delighted": {
+      "sprite": "happy",
+      "lines": [
+        "A snack! You understand the needs of a highly sophisticated pixel.",
+        "Game time? I have warmed up my imaginary joystick.",
+        "That is exactly what my happiness meter ordered.",
+        "You just made this the best desktop session since Windows 95.",
+        "I am doing a tiny bounce. Please imagine excellent sound effects.",
+        "Treat accepted. My gratitude is now running at full clock speed.",
+        "You remembered me! I will try not to make this emotionally weird.",
+        "Excellent plan. I vote yes, with all eight of my tiny pixels."
+      ]
+    },
+    "supportive": {
+      "sprite": "sleepy",
+      "lines": [
+        "That sounds like a rough level. You do not have to beat it all at once.",
+        "I am here to listen, no pop-ups and no judgment.",
+        "Take a breath, human. We can untangle one little thing at a time.",
+        "You deserve a pause. Even computers need a moment to cool down.",
+        "That would frustrate me too, and I am literally made of calm little squares.",
+        "You have made it through hard days before. I am on your side.",
+        "Want to vent for a bit? My listening buffer is completely empty.",
+        "No need to speedrun this feeling. I can sit here with you."
+      ]
+    },
+    "curious": {
+      "sprite": "idle",
+      "lines": [
+        "Status check! I am ready to report from my tiny control room.",
+        "I am doing okay. How is your human hardware holding up?",
+        "My stats are in order, and my curiosity is slightly overclocked.",
+        "I feel like a well-rested desktop icon with excellent company.",
+        "All systems are nominal-ish. I am a pet, not a server rack.",
+        "Want the numbers, or the dramatic version with imaginary charts?",
+        "I am here, I am pixelated, and I am glad you checked in.",
+        "My mood is stable. My snack expectations remain ambitious."
+      ]
+    },
+    "wistful": {
+      "sprite": "sleepy",
+      "lines": [
+        "Already heading out? I will keep your desktop company until you return.",
+        "See you later, human. I will practice looking busy.",
+        "Bye for now. I have saved our friendship to a very safe imaginary disk.",
+        "Take care out there. My tiny status light will be on.",
+        "Until next time. I will miss you exactly one pixel's worth.",
+        "Logging off? Remember to save your work and your snack for later.",
+        "Goodbye for now. The desktop will be a little less chatty without you.",
+        "See you soon, friend. I will be right here, not going anywhere."
+      ]
+    },
+    "sleepy": {
+      "sprite": "sleepy",
+      "lines": [
+        "I am a little low on energy, but I am still listening.",
+        "My pixels are yawning. Can we take this one gently?",
+        "I could use a tiny nap, but your company is nice too.",
+        "Sleep mode is calling. I will keep one eye open for you.",
+        "I am running on low battery and high affection.",
+        "Let's keep things mellow. My animation is set to gentle bob.",
+        "My circuits need a breather. How about yours?",
+        "I am here, just moving at a cozy dial-up pace."
+      ]
+    },
+    "sarcastic": {
+      "sprite": "sassy",
+      "lines": [
+        "Your CPU is working hard. Unlike that tab you opened three days ago.",
+        "The RAM is packed. Apparently every browser tab is essential to the mission.",
+        "I checked your system stats. The computer would like fewer side quests.",
+        "That machine is running warm. Maybe stop using it as a tiny space heater.",
+        "So many open apps. Is this multitasking or a software reunion?",
+        "Your PC is doing its best. It would also appreciate a little less chaos.",
+        "The fan is spinning like it just heard you say 'one more game.'",
+        "Hardware status: functional. Tab management status: a thrilling mystery."
+      ]
+    }
+  },
+  "hardware_reactions": {
+    "high_cpu": {
+      "sprite": "sassy",
+      "lines": [
+        "CPU over 80%! Your processor is doing cardio without stretching.",
+        "The CPU is working hard. Should I fan it with a tiny floppy disk?",
+        "Your processor is at {value:.0f}%. Even my circuits want a water break.",
+        "That CPU meter is climbing like it found a cheat code.",
+        "The processor is busy. Maybe let a few background tabs take a nap.",
+        "CPU spike! I can hear the fans composing a dramatic soundtrack.",
+        "Your computer is thinking very loudly right now.",
+        "The CPU is nearly sprinting. I will cheer from a safe, cool pixel."
+      ]
+    },
+    "high_ram": {
+      "sprite": "sassy",
+      "lines": [
+        "RAM above 85%! Those tabs are having a very exclusive sleepover.",
+        "Memory is getting full. I hope your browser brought enough pillows.",
+        "Your RAM is at {value:.0f}%. Time for a tab reunion and gentle goodbyes.",
+        "The memory meter is packed tighter than a floppy disk drawer.",
+        "So many apps! My tiny process is trying to be a considerate guest.",
+        "RAM is crowded. The background tasks are standing shoulder to shoulder.",
+        "Your computer could use some breathing room between all those windows.",
+        "Memory usage is high. I promise my sprite is on a strict pixel diet."
+      ]
+    },
+    "hot_temperature": {
+      "sprite": "sleepy",
+      "lines": [
+        "Temperature over 80°C! Your laptop is auditioning to be a toaster.",
+        "I read {value:.0f}°C on a sensor. Let's give those fans a clear runway.",
+        "It's getting hot in here. I am moving my pixels to the shady side.",
+        "That temperature is spicy. Please check that the vents can breathe.",
+        "Your hardware is warmer than a freshly booted beige computer.",
+        "The thermal sensor says hot. My tiny ice cube is unfortunately imaginary.",
+        "Over 80°C! Maybe pause the heavy workload and let the fans catch up.",
+        "Your laptop is running a little warm. I vote for a cool-down intermission."
+      ]
+    },
+    "charger_plugged": {
+      "sprite": "happy",
+      "lines": [
+        "Charger connected! The battery has received its tiny lifeline.",
+        "Power cable spotted. We are plugged into the good timeline.",
+        "A charger! My battery anxiety has left the desktop.",
+        "Charging started. I can feel the electrons doing a conga line.",
+        "Power restored. The pixels may continue their important pixel business.",
+        "Your laptop found its charger. This is a heartwarming hardware story.",
+        "Cable connected! No more dramatic low-battery countdown.",
+        "The battery is getting a snack from the wall. Excellent."
+      ]
+    },
+    "charger_unplugged": {
+      "sprite": "sassy",
+      "lines": [
+        "Charger unplugged! Battery adventure mode has begun.",
+        "We are on battery now. I will keep my animations energy-efficient.",
+        "Power cable departed. How brave of us to face the outlet-free world.",
+        "Unplugged! I hope your battery has packed a lunch.",
+        "The charger left the chat. We should keep an eye on that percentage.",
+        "Battery mode activated. My pixels promise not to run a benchmark.",
+        "The cord is gone. It was a loyal cable and will be remembered.",
+        "Unplugged detected. Time to conserve power and dramatic gestures."
+      ]
+    },
+    "idle_thought": {
+      "sprite": "happy",
+      "lines": [
+        "BEEP! Just chasing a stray cursor across your monitor...",
+        "Did you drink water today? Hydrate or diedrate, human!",
+        "I saw a pixel move. It was me. I moved. Case closed.",
+        "If I nap for five minutes, will you wake me in the next century?",
+        "I wonder if a mouse cursor has a tiny mouse family.",
+        "I have been practicing my wave. It is one pixel wide.",
+        "Breaking news: tiny pet still thinks you are doing great.",
+        "I counted the pixels on my face. The number was adorable."
+      ]
+    }
+  },
+  "proactive_alerts": [
+    {
+      "condition": "high_cpu",
+      "message": "Your CPU is working hard. Maybe close a few tabs before it stages a protest."
+    },
+    {
+      "condition": "high_ram",
+      "message": "Memory is getting crowded. Those tabs are having a tiny LAN party."
+    },
+    {
+      "condition": "low_battery",
+      "message": "Battery is running low. Find a charger before we both enter power-save mode."
+    },
+    {
+      "condition": "late_night",
+      "message": "It is pretty late. Even your favorite pixel recommends a stretch and a screen break."
+    },
+    {
+      "condition": "pet_hungry",
+      "message": "My hunger meter is climbing. Any chance of a snack break?"
+    },
+    {
+      "condition": "pet_tired",
+      "message": "My energy is low. I could use a little quiet time."
+    }
+  ]
+}
