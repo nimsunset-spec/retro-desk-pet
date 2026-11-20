@@ -14,6 +14,11 @@ from typing import Any
 ROOT = Path(__file__).resolve().parent
 TOKEN_PATTERN = re.compile(r"[a-z0-9']+")
 INTENT_THRESHOLD = 0.38
+FALLBACK_CONFIDENCE_THRESHOLD = 0.30
+UNKNOWN_RESPONSE = (
+    "I am not sure what you mean yet. Try asking about my stats or your PC, "
+    "tell me how you feel, or mention an app you have open."
+)
 
 
 def _tokenize(text: str) -> list[str]:
@@ -207,10 +212,12 @@ class BrainEngine:
             fallback_scores.items(),
             key=lambda item: item[1],
         )
+        if fallback_score < FALLBACK_CONFIDENCE_THRESHOLD:
+            return "unknown", fallback_score
         if neural is None:
             return fallback_intent, fallback_score
         neural_intent, neural_score = neural
-        if neural_score >= INTENT_THRESHOLD or fallback_score == 0.0:
+        if neural_intent == fallback_intent and neural_score >= INTENT_THRESHOLD:
             return neural_intent, neural_score
         return fallback_intent, fallback_score
 
@@ -257,7 +264,35 @@ class BrainEngine:
                 "confidence": 1.0,
                 "backend": self.backend,
             }
+        from core.sensors import SystemMonitor
+
+        activity = SystemMonitor._detect_activity(text.lower())
+        if activity not in {"other", "idle_desktop"}:
+            reaction = self.activity_reaction(
+                activity,
+                late_night=bool((telemetry or {}).get("late_night", False)),
+            )
+            if reaction is not None:
+                return {
+                    "intent": "activity_comment",
+                    "mood": self._mood(pet_stats, telemetry),
+                    "emotion": "curious",
+                    "sprite": reaction["sprite"],
+                    "response": reaction["message"],
+                    "confidence": 1.0,
+                    "backend": self.backend,
+                }
         intent, confidence = self.predict_intent(text, telemetry)
+        if intent == "unknown":
+            return {
+                "intent": intent,
+                "mood": self._mood(pet_stats, telemetry),
+                "emotion": "curious",
+                "sprite": "idle",
+                "response": UNKNOWN_RESPONSE,
+                "confidence": confidence,
+                "backend": self.backend,
+            }
         mood = self._mood(pet_stats, telemetry)
         emotion = self._INTENT_EMOTIONS.get(intent, "curious")
         if mood == "tired" and intent != "vent_frustration":

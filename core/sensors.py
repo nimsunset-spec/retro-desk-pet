@@ -180,10 +180,8 @@ class SystemMonitor:
         hour = datetime.now().hour
         title = active_window_title.lower()
         late_night = hour >= 23 or hour < 4
-        activity = self._detect_activity(title)
         fullscreen = self._is_fullscreen(active_window)
-        if fullscreen:
-            activity = "gaming"
+        activity = self._activity_for_window(title, fullscreen)
 
         with self._lock:
             normalized_title = " ".join(title.split())
@@ -241,6 +239,13 @@ class SystemMonitor:
         ):
             return "idle_desktop"
         return "other"
+
+    @classmethod
+    def _activity_for_window(cls, title: str, fullscreen: bool) -> str:
+        activity = cls._detect_activity(title)
+        if fullscreen and activity == "other":
+            return "gaming"
+        return activity
 
     @staticmethod
     def _matches_keyword(title: str, keyword: str) -> bool:

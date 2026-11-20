@@ -13,6 +13,7 @@ A tiny, fully offline desktop companion built with Python and PyQt6. The pet flo
 - Local CPU, RAM, battery, clock, active-window, and coding-session telemetry.
 - Local app-category and active-window-title-change counts; notification history stores categories and counts, not window titles or notification contents.
 - Offline intent brain: 320 hand-written examples across eight intents, expanded into 2,880 local training patterns for a custom PyTorch word-embedding/BiLSTM model with telemetry fusion, plus a scikit-learn TF-IDF fallback and original response templates.
+- App mentions and detected app/window changes use their matching activity-specific response pools; uncertain chat input gets a clarification instead of an unrelated intent guess.
 - Intent-aware emotional dialogue with supportive, playful, sleepy, and sarcastic tones plus anti-repeat response history.
 - Periodic, rate-limited proactive alerts for system and pet status.
 
