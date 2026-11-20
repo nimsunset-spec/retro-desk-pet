@@ -19,7 +19,12 @@ class PetMemory:
         "energy": -1.5,
         "happiness": -1.0,
     }
-    _SCHEMA_VERSION = 2
+    _ACTION_CHANGES = {
+        "feed": (-25.0, 2.0, 5.0, 3),
+        "pet": (0.0, 0.0, 12.0, 5),
+        "play": (5.0, -12.0, 18.0, 8),
+    }
+    _SCHEMA_VERSION = 4
 
     def __init__(self, database_path: str | Path | None = None, pet_name: str = "Pixel") -> None:
         migrate_legacy_database = database_path is None
@@ -109,6 +114,32 @@ class PetMemory:
                     source TEXT NOT NULL
                 )"""
             )
+            connection.execute(
+                """CREATE TABLE IF NOT EXISTS spoken_lines (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    timestamp REAL NOT NULL,
+                    normalized_line TEXT NOT NULL,
+                    message TEXT NOT NULL
+                )"""
+            )
+            connection.execute(
+                """CREATE TABLE IF NOT EXISTS response_phrases (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    timestamp REAL NOT NULL,
+                    phrase_type TEXT NOT NULL CHECK (phrase_type IN ('opener', 'closer')),
+                    normalized_phrase TEXT NOT NULL,
+                    phrase TEXT NOT NULL
+                )"""
+            )
+            connection.execute(
+                """CREATE TABLE IF NOT EXISTS activity_sessions (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    activity TEXT NOT NULL,
+                    detail TEXT NOT NULL DEFAULT '',
+                    started_at REAL NOT NULL,
+                    ended_at REAL
+                )"""
+            )
             self._ensure_columns(
                 connection,
                 "pet_stats",
@@ -153,6 +184,18 @@ class PetMemory:
                     "The pet_stats table is missing its required id column; "
                     "the existing database was left unchanged."
                 )
+            connection.execute(
+                "CREATE INDEX IF NOT EXISTS idx_spoken_lines_timestamp "
+                "ON spoken_lines(timestamp DESC)"
+            )
+            connection.execute(
+                "CREATE INDEX IF NOT EXISTS idx_response_phrases_type_timestamp "
+                "ON response_phrases(phrase_type, timestamp DESC, id DESC)"
+            )
+            connection.execute(
+                "CREATE INDEX IF NOT EXISTS idx_activity_sessions_activity "
+                "ON activity_sessions(activity, started_at)"
+            )
             connection.execute(
                 """
                 INSERT OR IGNORE INTO pet_stats
@@ -235,14 +278,9 @@ class PetMemory:
 
     def perform_action(self, action: str) -> dict[str, Any]:
         """Apply a supported care action and return the updated stats."""
-        changes: dict[str, tuple[float, float, float, int]] = {
-            "feed": (-25.0, 2.0, 5.0, 3),
-            "pet": (0.0, 0.0, 12.0, 5),
-            "play": (5.0, -12.0, 18.0, 8),
-        }
-        if action not in changes:
+        if action not in self._ACTION_CHANGES:
             raise ValueError(f"Unsupported pet action: {action}")
-        hunger, energy, happiness, xp = changes[action]
+        hunger, energy, happiness, xp = self._ACTION_CHANGES[action]
         now = time.time()
         with self._connection() as connection:
             self._apply_decay(connection, now)
@@ -262,6 +300,34 @@ class PetMemory:
             )
         return self.get_stats()
 
+    def preview_action(
+        self,
+        stats: dict[str, Any],
+        action: str,
+        now: float | None = None,
+    ) -> dict[str, Any]:
+        """Predict an action's visible stat changes without reading or writing SQLite."""
+        if action not in self._ACTION_CHANGES:
+            raise ValueError(f"Unsupported pet action: {action}")
+        timestamp = time.time() if now is None else now
+        preview = dict(stats)
+        elapsed_hours = max(
+            0.0,
+            timestamp - float(preview.get("last_updated", timestamp)),
+        ) / 3600.0
+        for stat, rate in self._DECAY_PER_HOUR.items():
+            preview[stat] = self._bounded(
+                float(preview[stat]) + rate * elapsed_hours
+            )
+        hunger, energy, happiness, xp = self._ACTION_CHANGES[action]
+        preview["hunger"] = self._bounded(float(preview["hunger"]) + hunger)
+        preview["energy"] = self._bounded(float(preview["energy"]) + energy)
+        preview["happiness"] = self._bounded(float(preview["happiness"]) + happiness)
+        preview["friendship_xp"] = int(preview["friendship_xp"]) + xp
+        preview["level"] = 1 + preview["friendship_xp"] // 100
+        preview["last_updated"] = timestamp
+        return preview
+
     @staticmethod
     def _read_stat(connection: sqlite3.Connection, stat: str) -> float:
         row = connection.execute(f"SELECT {stat} FROM pet_stats WHERE id = 1").fetchone()
@@ -280,6 +346,142 @@ class PetMemory:
                 "INSERT INTO chat_logs (timestamp, speaker, message) VALUES (?, ?, ?)",
                 (time.time(), speaker, message.strip()),
             )
+            if speaker == "pet":
+                cleaned_message = message.strip()
+                normalized = " ".join(cleaned_message.casefold().split())
+                connection.execute(
+                    """
+                    INSERT INTO spoken_lines (timestamp, normalized_line, message)
+                    VALUES (?, ?, ?)
+                    """,
+                    (time.time(), normalized, cleaned_message),
+                )
+
+    def recent_spoken_lines(self, limit: int = 30) -> list[str]:
+        """Return recent pet dialogue for local response anti-repetition checks."""
+        if limit < 1:
+            raise ValueError("Spoken-line limit must be positive.")
+        with self._connection() as connection:
+            rows = connection.execute(
+                """
+                SELECT message FROM spoken_lines
+                ORDER BY timestamp DESC, id DESC
+                LIMIT ?
+                """,
+                (limit,),
+            ).fetchall()
+        return [str(row["message"]) for row in rows]
+
+    def recent_response_phrases(
+        self,
+        phrase_type: str,
+        limit: int = 10,
+    ) -> list[str]:
+        """Return recently spoken opener or closer clauses for anti-repetition."""
+        if phrase_type not in {"opener", "closer"}:
+            raise ValueError("Phrase type must be 'opener' or 'closer'.")
+        if limit < 1:
+            raise ValueError("Phrase limit must be positive.")
+        with self._connection() as connection:
+            rows = connection.execute(
+                """
+                SELECT phrase FROM response_phrases
+                WHERE phrase_type = ?
+                ORDER BY timestamp DESC, id DESC
+                LIMIT ?
+                """,
+                (phrase_type, limit),
+            ).fetchall()
+        return [str(row["phrase"]) for row in rows]
+
+    def record_response_phrases(self, opener: str = "", closer: str = "") -> None:
+        """Persist the opener and closer from a response that was actually shown."""
+        phrases = [
+            (phrase_type, " ".join(phrase.split()).strip())
+            for phrase_type, phrase in (("opener", opener), ("closer", closer))
+            if phrase.strip()
+        ]
+        if not phrases:
+            return
+        now = time.time()
+        with self._connection() as connection:
+            connection.executemany(
+                """
+                INSERT INTO response_phrases
+                    (timestamp, phrase_type, normalized_phrase, phrase)
+                VALUES (?, ?, ?, ?)
+                """,
+                [
+                    (now, phrase_type, phrase.casefold(), phrase)
+                    for phrase_type, phrase in phrases
+                ],
+            )
+
+    def record_activity_switch(
+        self,
+        activity: str,
+        detail: str = "",
+        timestamp: float | None = None,
+    ) -> None:
+        """Close the current activity session and start a durable new one."""
+        normalized_activity = activity.strip().lower()
+        if not re.fullmatch(r"[a-z0-9_]{1,48}", normalized_activity):
+            raise ValueError("Activity must be a short normalized category.")
+        now = time.time() if timestamp is None else float(timestamp)
+        cleaned_detail = " ".join(detail.split())[:220]
+        with self._connection() as connection:
+            connection.execute(
+                """
+                UPDATE activity_sessions
+                SET ended_at = ?
+                WHERE ended_at IS NULL
+                """,
+                (now,),
+            )
+            connection.execute(
+                """
+                INSERT INTO activity_sessions (activity, detail, started_at)
+                VALUES (?, ?, ?)
+                """,
+                (normalized_activity, cleaned_detail, now),
+            )
+
+    def activity_time_summary(self, limit: int = 10) -> list[dict[str, Any]]:
+        """Aggregate recorded duration by activity without exposing window titles."""
+        if limit < 1:
+            raise ValueError("Activity summary limit must be positive.")
+        now = time.time()
+        with self._connection() as connection:
+            rows = connection.execute(
+                """
+                SELECT activity,
+                       SUM(MAX(0, COALESCE(ended_at, ?) - started_at)) AS seconds,
+                       COUNT(*) AS sessions
+                FROM activity_sessions
+                GROUP BY activity
+                ORDER BY seconds DESC
+                LIMIT ?
+                """,
+                (now, limit),
+            ).fetchall()
+        return [dict(row) for row in rows]
+
+    def recent_activity_switches(self, window_seconds: float = 7200.0) -> dict[str, int]:
+        """Count local activity sessions started within the requested recent window."""
+        if window_seconds <= 0:
+            raise ValueError("Activity-history window must be positive.")
+        cutoff = time.time() - window_seconds
+        with self._connection() as connection:
+            rows = connection.execute(
+                """
+                SELECT activity, COUNT(*) AS sessions
+                FROM activity_sessions
+                WHERE started_at >= ?
+                GROUP BY activity
+                """,
+                (cutoff,),
+            ).fetchall()
+        return {str(row["activity"]): int(row["sessions"]) for row in rows}
 
     def get_chat_logs(self, limit: int = 100) -> list[dict[str, Any]]:
         """Return the most recent messages in chronological order."""

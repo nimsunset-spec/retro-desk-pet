@@ -54,7 +54,12 @@ jobs:
           if ($LASTEXITCODE -eq 0) {
             gh release upload $tag "dist/RetroDeskPet-windows-x64.zip" "dist/RetroDeskPet-windows-x64.zip.sha256" --clobber
           } else {
-            gh release create $tag "dist/RetroDeskPet-windows-x64.zip" "dist/RetroDeskPet-windows-x64.zip.sha256" --title "Retro Desk Pet $tag" --generate-notes
+            $notes = @"
+          Windows x64 standalone bundle for Retro Desk Pet.
+
+          Download and extract RetroDeskPet-windows-x64.zip, then run RetroDeskPet.exe.
+          "@
+            gh release create $tag "dist/RetroDeskPet-windows-x64.zip" "dist/RetroDeskPet-windows-x64.zip.sha256" --title "Retro Desk Pet $tag" --notes $notes
           }
           if ($LASTEXITCODE -ne 0) {
             exit $LASTEXITCODE

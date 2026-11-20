@@ -23,12 +23,26 @@ class PixelPanel(QWidget):
         super().__init__(parent)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
         self.pointer_side = "bottom"
+        self.mood = "bored"
+
+    def set_mood(self, mood: str) -> None:
+        self.mood = mood
+        self.update()
 
     def paintEvent(self, event: object) -> None:
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing, False)
         painter.setPen(QColor("#26334a"))
-        painter.setBrush(QColor("#fff6d8"))
+        panel_colors = {
+            "annoyed": "#ffe0d2",
+            "flustered": "#ffe3f0",
+            "judging": "#e8e4ff",
+            "secretly_caring": "#e1f2d8",
+            "bored": "#fff6d8",
+            "smug": "#e8e4ff",
+            "sleepy": "#e1f2d8",
+        }
+        painter.setBrush(QColor(panel_colors.get(self.mood, "#fff6d8")))
         if self.pointer_side == "top":
             painter.drawRect(2, 15, self.width() - 5, self.height() - 18)
             pointer = QPolygon(
@@ -65,6 +79,7 @@ class ChatBubble(QWidget):
         self._full_text = ""
         self._visible_characters = 0
         self._auto_hide_remaining = 6000
+        self._chat_mode = False
 
         self.panel = PixelPanel(self)
         self.panel.setGeometry(0, 0, self.width(), self.height())
@@ -104,8 +119,13 @@ class ChatBubble(QWidget):
         self.installEventFilter(self)
         self.hide()
 
-    def show_message(self, message: str) -> None:
-        """Show a typewritten message, then dismiss it after six idle seconds."""
+    def set_mood(self, mood: str) -> None:
+        self.panel.set_mood(mood)
+
+    def show_message(self, message: str, immediate: bool = False) -> None:
+        """Show a message, optionally skipping typing, then dismiss after idle."""
+        self._chat_mode = False
+        self._typewriter.stop()
         self._full_text = message
         self._visible_characters = 0
         self._auto_hide_remaining = 6000
@@ -113,15 +133,23 @@ class ChatBubble(QWidget):
         self._fade_out.stop()
         self.setWindowOpacity(1.0)
         self.message_label.clear()
+        if immediate:
+            self.input.clearFocus()
+            self.setAttribute(Qt.WidgetAttribute.WA_ShowWithoutActivating, True)
         self.show()
         self.raise_()
-        if self._full_text:
+        if self._full_text and immediate:
+            self._visible_characters = len(self._full_text)
+            self.message_label.setText(self._full_text)
+            self._resume_auto_hide()
+        elif self._full_text:
             self._typewriter.start()
         else:
             self._resume_auto_hide()
 
     def show_for_chat(self) -> None:
         """Open an interactive chat panel without scheduling an idle dismissal."""
+        self._chat_mode = True
         self.setAttribute(Qt.WidgetAttribute.WA_ShowWithoutActivating, False)
         self._auto_hide.stop()
         self._fade_out.stop()
@@ -137,12 +165,17 @@ class ChatBubble(QWidget):
 
     def hide_immediately(self) -> None:
         """Hide on explicit dismissal and cancel all pending animation."""
+        self._chat_mode = False
         self._typewriter.stop()
         self._auto_hide.stop()
         self._fade_out.stop()
         self.hide()
         self.setAttribute(Qt.WidgetAttribute.WA_ShowWithoutActivating, True)
         self.setWindowOpacity(1.0)
+
+    @property
+    def is_chat_mode(self) -> bool:
+        return self._chat_mode
 
     def _advance_text(self) -> None:
         self._visible_characters = min(len(self._full_text), self._visible_characters + 2)

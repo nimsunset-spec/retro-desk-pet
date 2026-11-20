@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+import sys
 from pathlib import Path
 
 from PyQt6.QtCore import QPoint, Qt, QTimer, pyqtSignal
@@ -16,6 +17,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from core.autostart import is_autostart_enabled
 from core.resources import resource_path
 
 SPRITE_DIR = resource_path("assets", "sprites")
@@ -31,6 +33,7 @@ class AnimatedSprite(QLabel):
         self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
         self.setStyleSheet("background: transparent;")
         self._state = "idle"
+        self._mood = "bored"
         self._phase = 0.0
         self._frame_timer = QTimer(self)
         self._frame_timer.setInterval(100)
@@ -39,6 +42,10 @@ class AnimatedSprite(QLabel):
     def set_state(self, state: str, pixmap: QPixmap) -> None:
         self._state = state
         self.setPixmap(pixmap)
+        self.update()
+
+    def set_mood(self, mood: str) -> None:
+        self._mood = mood
         self.update()
 
     def _advance_frame(self) -> None:
@@ -70,6 +77,12 @@ class AnimatedSprite(QLabel):
         else:
             y_offset = math.sin(phase) * 1.2
             scale += math.sin(phase * 0.7) * 0.012
+        if self._mood == "flustered":
+            y_offset -= abs(math.sin(phase * 1.8)) * 1.4
+        elif self._mood in {"annoyed", "smug"}:
+            angle += math.sin(phase * 1.2) * 1.5
+        elif self._mood in {"secretly_caring", "sleepy"}:
+            scale += math.sin(phase * 0.55) * 0.01
 
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, False)
@@ -84,9 +97,20 @@ class PetWindow(QWidget):
     """Always-on-top frameless sprite with care and tray menus."""
 
     clicked = pyqtSignal()
+    double_clicked = pyqtSignal()
     position_changed = pyqtSignal()
     action_requested = pyqtSignal(str)
     stats_requested = pyqtSignal()
+    autostart_requested = pyqtSignal(bool)
+    MOOD_STATES = {
+        "annoyed": "sassy",
+        "flustered": "happy",
+        "judging": "sassy",
+        "secretly_caring": "sleepy",
+        "bored": "idle",
+        "smug": "sassy",
+        "sleepy": "sleepy",
+    }
 
     def __init__(self, pet_name: str = "Pixel") -> None:
         flags = (
@@ -101,6 +125,8 @@ class PetWindow(QWidget):
         self._drag_offset: QPoint | None = None
         self._press_position: QPoint | None = None
         self._dragged = False
+        self._mood = "bored"
+        self._sprite_pixmaps = self._load_sprites()
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -121,6 +147,7 @@ class PetWindow(QWidget):
 
         self._tray: QSystemTrayIcon | None = None
         self._tray_menu: QMenu | None = None
+        self._autostart_action: QAction | None = None
         self.set_state("idle")
         self._create_tray_icon()
 
@@ -131,13 +158,27 @@ class PetWindow(QWidget):
     def set_state(self, state: str) -> None:
         if state not in PET_STATES:
             raise ValueError(f"Unknown pet sprite state: {state}")
-        sprite_path = SPRITE_DIR / f"{state}.png"
-        if not sprite_path.is_file():
-            raise FileNotFoundError(f"Pet sprite does not exist: {sprite_path}")
-        pixmap = QPixmap(str(sprite_path))
-        if pixmap.isNull():
-            raise OSError(f"Could not load pet sprite: {sprite_path}")
-        self.sprite.set_state(state, pixmap)
+        self.sprite.set_state(state, self._sprite_pixmaps[state])
+
+    @staticmethod
+    def _load_sprites() -> dict[str, QPixmap]:
+        pixmaps: dict[str, QPixmap] = {}
+        for state in PET_STATES:
+            sprite_path = SPRITE_DIR / f"{state}.png"
+            if not sprite_path.is_file():
+                raise FileNotFoundError(f"Pet sprite does not exist: {sprite_path}")
+            pixmap = QPixmap(str(sprite_path))
+            if pixmap.isNull():
+                raise OSError(f"Could not load pet sprite: {sprite_path}")
+            pixmaps[state] = pixmap
+        return pixmaps
+
+    def set_mood(self, mood: str) -> None:
+        if mood not in self.MOOD_STATES:
+            raise ValueError(f"Unknown pet mood: {mood}")
+        self._mood = mood
+        self.sprite.set_mood(mood)
+        self.set_state(self.MOOD_STATES[mood])
 
     def _create_tray_icon(self) -> None:
         self._tray_menu = self._build_context_menu()
@@ -161,6 +202,19 @@ class PetWindow(QWidget):
         feed = QAction("Feed", menu)
         pet = QAction("Pet", menu)
         stats = QAction("Stats", menu)
+        autostart = QAction("Start with Windows", menu)
+        autostart.setCheckable(True)
+        try:
+            autostart.setChecked(is_autostart_enabled())
+        except OSError as error:
+            print(
+                f"[PET-DEBUG] Could not read Windows startup setting: {error}",
+                file=sys.stderr,
+                flush=True,
+            )
+            autostart.setChecked(False)
+        autostart.toggled.connect(self.autostart_requested.emit)
+        self._autostart_action = autostart
         quit_action = QAction("Quit", menu)
         feed.triggered.connect(lambda checked=False: self.action_requested.emit("feed"))
         pet.triggered.connect(lambda checked=False: self.action_requested.emit("pet"))
@@ -171,8 +225,20 @@ class PetWindow(QWidget):
         menu.addSeparator()
         menu.addAction(stats)
         menu.addSeparator()
+        menu.addAction(autostart)
+        menu.addSeparator()
         menu.addAction(quit_action)
         return menu
+
+    def set_autostart_enabled(self, enabled: bool) -> None:
+        """Synchronize the checkable startup action without emitting a toggle."""
+        if self._autostart_action is None:
+            return
+        previous_block_state = self._autostart_action.blockSignals(True)
+        try:
+            self._autostart_action.setChecked(enabled)
+        finally:
+            self._autostart_action.blockSignals(previous_block_state)
 
     def contextMenuEvent(self, event: object) -> None:
         if self._tray_menu is not None:
@@ -215,6 +281,16 @@ class PetWindow(QWidget):
             return
         self._drag_offset = None
         super().mouseReleaseEvent(event)
+
+    def mouseDoubleClickEvent(self, event: object) -> None:
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.double_clicked.emit()
+            self._press_position = None
+            self._drag_offset = None
+            self._dragged = False
+            event.accept()
+            return
+        super().mouseDoubleClickEvent(event)
 
     def _tray_activated(self, reason: QSystemTrayIcon.ActivationReason) -> None:
         if reason == QSystemTrayIcon.ActivationReason.Trigger:

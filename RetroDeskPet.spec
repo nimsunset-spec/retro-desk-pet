@@ -10,7 +10,7 @@ a = Analysis(
     datas=[
         (str(ROOT / "assets" / "sprites"), "assets/sprites"),
         (str(ROOT / "brain" / "dataset.json"), "brain"),
-        (str(ROOT / "brain" / "model.pt"), "brain"),
+        (str(ROOT / "brain" / "ngram_model.json"), "brain"),
     ],
     hiddenimports=[
         "pygetwindow",
