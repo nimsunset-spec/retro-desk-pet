@@ -10,8 +10,13 @@ a = Analysis(
     datas=[
         (str(ROOT / "assets" / "sprites"), "assets/sprites"),
         (str(ROOT / "brain" / "dataset.json"), "brain"),
+        (str(ROOT / "brain" / "model.pt"), "brain"),
     ],
-    hiddenimports=["pygetwindow"],
+    hiddenimports=[
+        "pygetwindow",
+        "winsdk.windows.ui.notifications",
+        "winsdk.windows.ui.notifications.management",
+    ],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],

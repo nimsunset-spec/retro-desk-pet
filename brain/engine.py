@@ -7,11 +7,10 @@ import math
 import random
 import re
 from collections import deque
-from pathlib import Path
 from typing import Any
 
+from core.resources import resource_path
 
-ROOT = Path(__file__).resolve().parent
 TOKEN_PATTERN = re.compile(r"[a-z0-9']+")
 INTENT_THRESHOLD = 0.38
 FALLBACK_CONFIDENCE_THRESHOLD = 0.30
@@ -40,7 +39,7 @@ class BrainEngine:
     }
 
     def __init__(self, seed: int | None = None) -> None:
-        with (ROOT / "dataset.json").open("r", encoding="utf-8") as file:
+        with resource_path("brain", "dataset.json").open("r", encoding="utf-8") as file:
             self.dataset: dict[str, Any] = json.load(file)
         self.intents = list(self.dataset["intents"])
         self._random = random.Random(seed)
@@ -105,7 +104,7 @@ class BrainEngine:
             self._backend_error = f"scikit-learn unavailable; using token overlap: {error}"
 
     def _initialize_model(self) -> None:
-        checkpoint_path = ROOT / "model.pt"
+        checkpoint_path = resource_path("brain", "model.pt")
         if not checkpoint_path.is_file():
             self._backend_error = "No local model checkpoint found; using the offline fallback."
             return
@@ -397,6 +396,16 @@ class BrainEngine:
         return {
             "sprite": reaction["sprite"],
             "message": self._choose_response(f"activity:{reaction_key}", lines),
+        }
+
+    def notification_reaction(self, app_name: str) -> dict[str, str]:
+        """Create a short notification comment without reading its contents."""
+        reaction = self.dataset["notification_reactions"]
+        safe_name = " ".join(app_name.split())[:48] or "an app"
+        line = self._choose_response("notification", reaction["lines"])
+        return {
+            "sprite": reaction["sprite"],
+            "message": line.format(app=safe_name),
         }
 
     def hardware_reaction(

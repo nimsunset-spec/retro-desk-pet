@@ -16,8 +16,9 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from core.resources import resource_path
 
-SPRITE_DIR = Path(__file__).resolve().parent.parent / "assets" / "sprites"
+SPRITE_DIR = resource_path("assets", "sprites")
 PET_STATES = {"idle", "happy", "sleepy", "hungry", "sassy"}
 
 
@@ -32,9 +33,8 @@ class AnimatedSprite(QLabel):
         self._state = "idle"
         self._phase = 0.0
         self._frame_timer = QTimer(self)
-        self._frame_timer.setInterval(70)
+        self._frame_timer.setInterval(100)
         self._frame_timer.timeout.connect(self._advance_frame)
-        self._frame_timer.start()
 
     def set_state(self, state: str, pixmap: QPixmap) -> None:
         self._state = state
@@ -219,6 +219,14 @@ class PetWindow(QWidget):
     def _tray_activated(self, reason: QSystemTrayIcon.ActivationReason) -> None:
         if reason == QSystemTrayIcon.ActivationReason.Trigger:
             self.setVisible(not self.isVisible())
+
+    def showEvent(self, event: object) -> None:
+        self.sprite._frame_timer.start()
+        super().showEvent(event)
+
+    def hideEvent(self, event: object) -> None:
+        self.sprite._frame_timer.stop()
+        super().hideEvent(event)
 
     def closeEvent(self, event: object) -> None:
         if self._tray is not None:

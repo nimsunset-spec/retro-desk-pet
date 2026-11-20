@@ -11,7 +11,8 @@ A tiny, fully offline desktop companion built with Python and PyQt6. The pet flo
 - Hidden-by-default typewriter speech bubble with a built-in chat field and timed fade-out.
 - SQLite persistence for name, hunger, energy, happiness, friendship XP, and chat history.
 - Local CPU, RAM, battery, clock, active-window, and coding-session telemetry.
-- Local app-category and active-window-title-change counts; notification history stores categories and counts, not window titles or notification contents.
+- Fast foreground-window switch detection, including window open/focus/close changes; Windows toast notifications are tracked only when the user grants listener access.
+- Notification history stores normalized app categories and notification IDs, never notification titles or contents.
 - Offline intent brain: 320 hand-written examples across eight intents, expanded into 2,880 local training patterns for a custom PyTorch word-embedding/BiLSTM model with telemetry fusion, plus a scikit-learn TF-IDF fallback and original response templates.
 - App mentions and detected app/window changes use their matching activity-specific response pools; uncertain chat input gets a clarification instead of an unrelated intent guess.
 - Intent-aware emotional dialogue with supportive, playful, sleepy, and sarcastic tones plus anti-repeat response history.
@@ -78,14 +79,15 @@ main.py                 Application wiring and 60-second alert timer
 ui/pet_window.py        Animated transparent pet, dragging, context menu, tray icon
 ui/chat_bubble.py       Auto-hiding pixel speech panel and chat input
 core/memory.py          SQLite state, decay, care actions, and chat history
-core/sensors.py         Background local telemetry sampling
+core/sensors.py         Fast foreground events, periodic telemetry, Windows toast listener
+core/resources.py       Source and PyInstaller resource path resolution
 brain/dataset.json      Intent examples, response pools, and alert templates
 brain/train.py          Scratch-trained BiLSTM with telemetry fusion
 brain/engine.py         Inference, emotional dialogue, and response generation
 assets/generate_sprites.py  Local transparent pixel-art sprite generation
 ```
 
-The installed app stores its SQLite database in the current user's application-data folder (`%LOCALAPPDATA%\RetroDeskPet` on Windows, or `$XDG_DATA_HOME/retro-desk-pet` on Linux; the default Linux base is `~/.local/share`). Existing `data/pet.sqlite3` files remain in use when running directly from a source checkout.
+The installed app stores its SQLite database in the current user's application-data folder (`%APPDATA%\RetroDeskPet` on Windows, or `$XDG_DATA_HOME/retro-desk-pet` on Linux; the default Linux base is `~/.local/share`). If an older `data/pet.sqlite3` exists, it is backed up into the new location on first launch.
 
 ## Notes
 
@@ -93,3 +95,4 @@ The installed app stores its SQLite database in the current user's application-d
 - On Linux, X11 active-window detection can use `xdotool`; Wayland may restrict window-title access. Browser tracking uses visible active-window titles only and does not read page contents or search text.
 - Training selects CUDA when PyTorch detects a compatible GPU and otherwise uses CPU. Inference is always performed on CPU.
 - A system tray is shown when the desktop environment provides one.
+- On Windows, toast tracking uses the system notification listener and requires permission in Windows Settings. If access is unavailable or denied, app and window reactions continue to work.

@@ -990,6 +990,19 @@
       ]
     }
   },
+  "notification_reactions": {
+    "sprite": "happy",
+    "lines": [
+      "A new notification from {app}. I will let you decide if it needs your attention.",
+      "{app} just sent something your way. Your inbox is making moves.",
+      "Ping from {app}! I noticed the activity, but I am keeping the message private.",
+      "A notification arrived from {app}. I will leave the reading to you, boss.",
+      "{app} has a fresh ping. My tiny pager is officially on duty.",
+      "New alert from {app}. I saw the app name, not the contents.",
+      "Your {app} notification just landed. Consider this my very polite doorbell.",
+      "A little ping from {app}. No snooping, just a heads-up!"
+    ]
+  },
   "proactive_alerts": [
     {
       "condition": "high_cpu",

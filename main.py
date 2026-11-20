@@ -5,17 +5,32 @@ from __future__ import annotations
 import random
 import sys
 import time
-from pathlib import Path
+from dataclasses import replace
 from typing import Any
 
-from PyQt6.QtCore import QPoint, QTimer
+from PyQt6.QtCore import QObject, QPoint, QTimer, pyqtSignal
 from PyQt6.QtWidgets import QApplication
 
 from brain.engine import BrainEngine
 from core.memory import PetMemory
-from core.sensors import SystemMonitor, Telemetry
+from core.resources import resource_path
+from core.sensors import (
+    SystemMonitor,
+    SystemNotification,
+    Telemetry,
+    WindowChangeEvent,
+    WindowsNotificationListener,
+)
 from ui.chat_bubble import ChatBubble
 from ui.pet_window import PetWindow
+
+
+class SensorEventBridge(QObject):
+    """Deliver worker-thread sensor events safely to the Qt UI thread."""
+
+    window_changed = pyqtSignal(object)
+    notification_received = pyqtSignal(object)
+    status_changed = pyqtSignal(str)
 
 
 class PetApp:
@@ -24,30 +39,43 @@ class PetApp:
     ALERT_COOLDOWN_SECONDS = 15 * 60
     HARDWARE_COOLDOWN_SECONDS = 3 * 60
     ACTIVITY_SPEECH_GAP_SECONDS = 8.0
+    NOTIFICATION_SPEECH_GAP_SECONDS = 12.0
+    NOTIFICATION_APP_COOLDOWN_SECONDS = 45.0
 
     def __init__(self, application: QApplication) -> None:
         self.application = application
         self.memory = PetMemory()
-        self.monitor = SystemMonitor(interval_seconds=5.0)
+        self.monitor = SystemMonitor(interval_seconds=5.0, window_poll_interval_seconds=0.5)
         self.brain = BrainEngine()
         self.pet_window = PetWindow(self.memory.get_stats()["name"])
         self.chat_bubble = ChatBubble(self.pet_window)
+        self.sensor_events = SensorEventBridge()
+        self.notification_listener = WindowsNotificationListener(
+            self.sensor_events.notification_received.emit,
+            self.sensor_events.status_changed.emit,
+        )
         self._last_alert_at: dict[str, float] = {}
         self._last_activity_speech_at = 0.0
         self._pending_activity_reactions: list[tuple[str, dict[str, str]]] = []
         self._last_hardware_reaction_at: dict[str, float] = {}
+        self._last_notification_reaction_at: dict[str, float] = {}
+        self._last_notification_speech_at = 0.0
+        self._pending_notifications: list[SystemNotification] = []
         self._activity_sprite_state: str | None = None
         self._temporary_sprite_state: str | None = None
         self._pending_hardware_events: list[tuple[str, dict[str, Any]]] = []
         self._random = random.Random()
 
+        self.sensor_events.window_changed.connect(self._handle_window_change)
+        self.sensor_events.notification_received.connect(self._handle_system_notification)
+        self.sensor_events.status_changed.connect(self._handle_notification_status)
         self.pet_window.action_requested.connect(self._perform_action)
         self.pet_window.stats_requested.connect(self._show_stats)
         self.pet_window.clicked.connect(self._toggle_chat)
         self.pet_window.position_changed.connect(self._reposition_bubble_if_visible)
         self.chat_bubble.message_submitted.connect(self._handle_chat)
 
-        self.monitor.start()
+        self.monitor.start(window_callback=self.sensor_events.window_changed.emit)
         initial_telemetry = self.monitor.get_snapshot()
         self._last_observed_activity = initial_telemetry.activity
         self._last_observed_late_night = initial_telemetry.late_night
@@ -74,7 +102,7 @@ class PetApp:
         self.state_timer.start()
 
         self.activity_timer = QTimer(self.pet_window)
-        self.activity_timer.setInterval(5000)
+        self.activity_timer.setInterval(1000)
         self.activity_timer.timeout.connect(self._poll_reactive_events)
         self.activity_timer.start()
 
@@ -82,10 +110,18 @@ class PetApp:
         self.alert_timer.setInterval(60_000)
         self.alert_timer.timeout.connect(self._check_alerts)
         self.alert_timer.start()
-        self.application.aboutToQuit.connect(self.monitor.stop)
+        if sys.platform == "win32":
+            self.notification_listener.start()
+        self.application.aboutToQuit.connect(self._stop_sensors)
 
         if self.brain.backend_error:
             print(f"Brain status: {self.brain.backend_error}", file=sys.stderr)
+
+    def _stop_sensors(self) -> None:
+        try:
+            self.notification_listener.stop()
+        finally:
+            self.monitor.stop()
 
     def _position_bubble(self) -> None:
         sprite_position = self.pet_window.mapToGlobal(QPoint(56, 4))
@@ -155,14 +191,35 @@ class PetApp:
         return telemetry.activity
 
     def _poll_reactive_events(self) -> None:
-        if self._check_activity():
+        if self._check_late_night_transition():
+            return
+        if self._flush_activity_reactions():
+            return
+        if self._flush_notification_reactions():
             return
         if self._check_hardware_events():
             return
         self._check_idle_daydream()
 
-    def _check_activity(self) -> bool:
-        telemetry = self.monitor.get_snapshot()
+    def _handle_window_change(self, event: WindowChangeEvent) -> None:
+        state = event.current
+        telemetry = replace(
+            self.monitor.get_snapshot(),
+            active_window_title=state.title,
+            app_source=state.app_source,
+            activity=state.activity,
+            window_changed=True,
+            last_activity=event.previous.activity,
+            fullscreen=state.fullscreen,
+            coding_detected=state.activity == "coding",
+            sampled_at=event.occurred_at,
+            window_handle=state.window_handle,
+            process_id=state.process_id,
+            process_name=state.process_name,
+        )
+        self._check_activity(telemetry)
+
+    def _check_activity(self, telemetry: Telemetry) -> bool:
         activity_changed = telemetry.activity != self._last_observed_activity
         window_changed = telemetry.window_changed
         entered_late_night_coding = (
@@ -218,6 +275,67 @@ class PetApp:
                     self._queue_activity_reaction(reaction_key, reaction)
 
         return self._flush_activity_reactions()
+
+    def _check_late_night_transition(self) -> bool:
+        telemetry = self.monitor.get_snapshot()
+        entered_late_night_coding = (
+            telemetry.activity == "coding"
+            and telemetry.late_night
+            and not self._last_observed_late_night
+        )
+        left_late_night_coding = (
+            telemetry.activity == "coding"
+            and not telemetry.late_night
+            and self._last_observed_late_night
+        )
+        self._last_observed_late_night = telemetry.late_night
+        if entered_late_night_coding:
+            self.memory.record_notification(telemetry.app_source, "alert")
+            reaction = self.brain.activity_reaction("coding", late_night=True)
+            if reaction is not None:
+                self._activity_sprite_state = reaction["sprite"]
+                self._queue_activity_reaction("coding_late_night", reaction)
+        elif left_late_night_coding:
+            reaction = self.brain.activity_reaction("coding")
+            if reaction is not None:
+                self._activity_sprite_state = reaction["sprite"]
+                self.pet_window.set_state(reaction["sprite"])
+        return self._flush_activity_reactions()
+
+    def _handle_system_notification(self, event: SystemNotification) -> None:
+        if not self.memory.record_system_notification(event.notification_id, event.source):
+            return
+        if time.monotonic() - self._last_notification_reaction_at.get(event.source, 0.0) < (
+            self.NOTIFICATION_APP_COOLDOWN_SECONDS
+        ):
+            return
+        if any(item.source == event.source for item in self._pending_notifications):
+            return
+        if len(self._pending_notifications) >= 12:
+            self._pending_notifications.pop(0)
+        self._pending_notifications.append(event)
+
+    def _flush_notification_reactions(self) -> bool:
+        if not self._pending_notifications or self.chat_bubble.isVisible():
+            return False
+        now = time.monotonic()
+        if now - self._last_notification_speech_at < self.NOTIFICATION_SPEECH_GAP_SECONDS:
+            return False
+        event = self._pending_notifications.pop(0)
+        self._last_notification_speech_at = now
+        self._last_notification_reaction_at[event.source] = now
+        self._show_reaction(self.brain.notification_reaction(event.app_name), transient=True)
+        return True
+
+    def _handle_notification_status(self, message: str) -> None:
+        print(f"Notification status: {message}", file=sys.stderr)
+        if "enabled" in message.lower():
+            return
+        if not self.chat_bubble.isVisible():
+            self.chat_bubble.show_message(
+                "Notification access is off, but I can still react to your app changes."
+            )
+            self._position_bubble()
 
     def _queue_activity_reaction(
         self,
@@ -371,7 +489,7 @@ def main() -> int:
     application = QApplication(sys.argv)
     application.setApplicationName("Retro Desktop Pet")
     application.setQuitOnLastWindowClosed(False)
-    assets = Path(__file__).resolve().parent / "assets" / "sprites"
+    assets = resource_path("assets", "sprites")
     if not assets.is_dir():
         raise FileNotFoundError(
             f"Sprites not found at {assets}. Run assets/generate_sprites.py first."

@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import asyncio
+import ctypes
+import importlib
 import math
 import re
 import shutil
@@ -9,7 +12,7 @@ import subprocess
 import sys
 import threading
 import time
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from datetime import datetime
 from typing import Callable
 
@@ -44,14 +47,58 @@ class Telemetry:
     coding_detected: bool
     sampled_at: float
     error: str | None = None
+    window_handle: int | None = None
+    process_id: int | None = None
+    process_name: str = ""
 
     def as_dict(self) -> dict[str, float | int | bool | str | None]:
         """Return a plain dictionary suitable for the brain and UI."""
         return asdict(self)
 
 
+@dataclass(frozen=True)
+class ActiveWindowState:
+    """Small foreground-window snapshot used for fast transition detection."""
+
+    window_handle: int | None
+    process_id: int | None
+    process_name: str
+    title: str
+    activity: str
+    app_source: str
+    fullscreen: bool
+    error: str | None = None
+
+    @property
+    def signature(self) -> tuple[int | None, int | None, str]:
+        return (
+            self.window_handle,
+            self.process_id,
+            " ".join(self.title.lower().split()),
+        )
+
+
+@dataclass(frozen=True)
+class WindowChangeEvent:
+    """A foreground-window transition delivered immediately by the monitor."""
+
+    previous: ActiveWindowState
+    current: ActiveWindowState
+    kind: str
+    occurred_at: float
+
+
+@dataclass(frozen=True)
+class SystemNotification:
+    """Notification metadata without notification title or body text."""
+
+    notification_id: str
+    app_name: str
+    source: str
+
+
 class SystemMonitor:
-    """Poll system telemetry and track active-window activity transitions."""
+    """Sample foreground windows quickly and hardware telemetry less often."""
 
     _ACTIVITY_KEYWORDS = {
         "gaming": ("steam", "epic games", "valorant", "minecraft", "roblox"),
@@ -128,22 +175,48 @@ class SystemMonitor:
     _BROWSER_KEYWORDS = _ACTIVITY_KEYWORDS["browsing"]
     _SEARCH_KEYWORDS = ("google search", "bing", "duckduckgo", "search results", "startpage")
 
-    def __init__(self, interval_seconds: float = 5.0) -> None:
-        if interval_seconds <= 0:
-            raise ValueError("Monitor interval must be greater than zero.")
+    def __init__(
+        self,
+        interval_seconds: float = 5.0,
+        window_poll_interval_seconds: float = 0.5,
+    ) -> None:
+        if interval_seconds <= 0 or window_poll_interval_seconds <= 0:
+            raise ValueError("Monitor intervals must be greater than zero.")
         self.interval_seconds = interval_seconds
+        self.window_poll_interval_seconds = min(window_poll_interval_seconds, 1.0)
         self._stop_event = threading.Event()
         self._thread: threading.Thread | None = None
         self._lock = threading.Lock()
         self._snapshot: Telemetry | None = None
         self._callback: Callable[[Telemetry], None] | None = None
+        self._window_callback: Callable[[WindowChangeEvent], None] | None = None
         self._last_activity: str | None = None
         self._current_activity: str | None = None
-        self._current_window_title: str | None = None
+        self._active_window_state: ActiveWindowState | None = None
         self._screen_size: tuple[int, int] | None = None
 
     def sample(self) -> Telemetry:
-        """Read a fresh hardware and active-window snapshot."""
+        """Synchronously read hardware and foreground state for explicit refreshes."""
+        state = self._read_active_window()
+        if state.error:
+            with self._lock:
+                previous = self._active_window_state
+            if previous is not None:
+                state = replace(previous, error=state.error)
+        event = self._record_window_state(state)
+        snapshot = self._sample_telemetry(state, window_changed=event is not None)
+        with self._lock:
+            self._snapshot = snapshot
+            callback = self._window_callback
+        if event is not None and callback is not None:
+            callback(event)
+        return snapshot
+
+    def _sample_telemetry(
+        self,
+        state: ActiveWindowState,
+        window_changed: bool,
+    ) -> Telemetry:
         errors: list[str] = []
         cpu_percent = psutil.cpu_percent(interval=None)
         ram_percent = psutil.virtual_memory().percent
@@ -155,46 +228,10 @@ class SystemMonitor:
         cpu_temperature_c, system_temperature_c, temperature_error = self._read_temperatures()
         if temperature_error:
             errors.append(temperature_error)
-        active_window_title = ""
-        active_window = None
-
-        if pygetwindow is not None:
-            try:
-                active_window_title = pygetwindow.getActiveWindowTitle() or ""
-                get_active_window = getattr(pygetwindow, "getActiveWindow", None)
-                if get_active_window is not None:
-                    active_window = get_active_window()
-            except Exception as error:
-                if not sys.platform.startswith("linux"):
-                    errors.append(f"Window telemetry unavailable: {error}")
-        elif _WINDOW_IMPORT_ERROR is not None:
-            if not sys.platform.startswith("linux"):
-                errors.append(f"Window telemetry unavailable: {_WINDOW_IMPORT_ERROR}")
-
-        if sys.platform.startswith("linux") and not active_window_title:
-            try:
-                active_window_title = self._read_linux_active_title()
-            except (OSError, subprocess.SubprocessError) as error:
-                errors.append(f"Linux window title unavailable: {error}")
-
+        if state.error:
+            errors.append(state.error)
         hour = datetime.now().hour
-        title = active_window_title.lower()
         late_night = hour >= 23 or hour < 4
-        fullscreen = self._is_fullscreen(active_window)
-        activity = self._activity_for_window(title, fullscreen)
-
-        with self._lock:
-            normalized_title = " ".join(title.split())
-            window_changed = (
-                self._current_window_title is not None
-                and normalized_title != self._current_window_title
-            )
-            self._current_window_title = normalized_title
-            if activity != self._current_activity:
-                self._last_activity = self._current_activity
-                self._current_activity = activity
-            last_activity = self._last_activity
-
         return Telemetry(
             cpu_percent=float(cpu_percent),
             ram_percent=float(ram_percent),
@@ -205,16 +242,183 @@ class SystemMonitor:
             system_temperature_c=system_temperature_c,
             hour=hour,
             late_night=late_night,
-            active_window_title=active_window_title,
-            app_source=self._detect_app_source(title, activity),
+            active_window_title=state.title,
+            app_source=state.app_source,
             window_changed=window_changed,
-            activity=activity,
-            last_activity=last_activity,
-            fullscreen=fullscreen,
-            coding_detected=activity == "coding",
+            activity=state.activity,
+            last_activity=self._last_activity,
+            fullscreen=state.fullscreen,
+            coding_detected=state.activity == "coding",
             sampled_at=time.time(),
             error="; ".join(errors) if errors else None,
+            window_handle=state.window_handle,
+            process_id=state.process_id,
+            process_name=state.process_name,
         )
+
+    def _read_active_window(self) -> ActiveWindowState:
+        try:
+            if sys.platform == "win32":
+                return self._read_windows_active_window()
+            return self._read_desktop_active_window()
+        except (OSError, RuntimeError, subprocess.SubprocessError, psutil.Error) as error:
+            return self._make_window_state(
+                title="",
+                window_handle=None,
+                process_id=None,
+                process_name="",
+                fullscreen=False,
+                error=f"Window telemetry unavailable: {type(error).__name__}: {error}",
+            )
+
+    def _read_windows_active_window(self) -> ActiveWindowState:
+        from ctypes import wintypes
+
+        user32 = ctypes.WinDLL("user32", use_last_error=True)
+        user32.GetForegroundWindow.restype = wintypes.HWND
+        user32.GetWindowTextLengthW.argtypes = [wintypes.HWND]
+        user32.GetWindowTextLengthW.restype = ctypes.c_int
+        user32.GetWindowTextW.argtypes = [wintypes.HWND, wintypes.LPWSTR, ctypes.c_int]
+        user32.GetWindowTextW.restype = ctypes.c_int
+        user32.GetWindowThreadProcessId.argtypes = [
+            wintypes.HWND,
+            ctypes.POINTER(wintypes.DWORD),
+        ]
+        user32.GetWindowThreadProcessId.restype = wintypes.DWORD
+
+        window_handle = user32.GetForegroundWindow()
+        if not window_handle:
+            return self._make_window_state("", None, None, "", False)
+        title_length = user32.GetWindowTextLengthW(window_handle)
+        title_buffer = ctypes.create_unicode_buffer(max(title_length + 1, 2))
+        user32.GetWindowTextW(window_handle, title_buffer, len(title_buffer))
+        process_id = wintypes.DWORD()
+        user32.GetWindowThreadProcessId(window_handle, ctypes.byref(process_id))
+        process_id_value = int(process_id.value) or None
+        process_name = ""
+        if process_id_value is not None:
+            try:
+                process_name = psutil.Process(process_id_value).name()
+            except psutil.Error:
+                process_name = ""
+
+        rectangle = wintypes.RECT()
+        user32.GetWindowRect.argtypes = [wintypes.HWND, ctypes.POINTER(wintypes.RECT)]
+        user32.GetWindowRect.restype = wintypes.BOOL
+        fullscreen = False
+        if user32.GetWindowRect(window_handle, ctypes.byref(rectangle)):
+            screen_width = int(user32.GetSystemMetrics(0))
+            screen_height = int(user32.GetSystemMetrics(1))
+            fullscreen = (
+                rectangle.left <= 2
+                and rectangle.top <= 2
+                and rectangle.right - rectangle.left >= screen_width - 2
+                and rectangle.bottom - rectangle.top >= screen_height - 2
+            )
+        return self._make_window_state(
+            title=title_buffer.value,
+            window_handle=int(window_handle),
+            process_id=process_id_value,
+            process_name=process_name,
+            fullscreen=fullscreen,
+        )
+
+    def _read_desktop_active_window(self) -> ActiveWindowState:
+        active_window = None
+        title = ""
+        if pygetwindow is not None:
+            try:
+                title = pygetwindow.getActiveWindowTitle() or ""
+                get_active_window = getattr(pygetwindow, "getActiveWindow", None)
+                if get_active_window is not None:
+                    active_window = get_active_window()
+            except (OSError, RuntimeError) as error:
+                if not sys.platform.startswith("linux"):
+                    raise
+                title_error = str(error)
+            else:
+                title_error = None
+        else:
+            title_error = _WINDOW_IMPORT_ERROR
+
+        if sys.platform.startswith("linux") and not title:
+            try:
+                title = self._read_linux_active_title()
+                title_error = None
+            except (OSError, subprocess.SubprocessError) as error:
+                title_error = str(error)
+
+        window_handle = getattr(active_window, "_hWnd", None)
+        fullscreen = self._is_fullscreen(active_window)
+        return self._make_window_state(
+            title=title,
+            window_handle=int(window_handle) if window_handle is not None else None,
+            process_id=None,
+            process_name="",
+            fullscreen=fullscreen,
+            error=(
+                f"Window telemetry unavailable: {title_error}"
+                if title_error and not sys.platform.startswith("linux")
+                else None
+            ),
+        )
+
+    @classmethod
+    def _make_window_state(
+        cls,
+        title: str,
+        window_handle: int | None,
+        process_id: int | None,
+        process_name: str,
+        fullscreen: bool,
+        error: str | None = None,
+    ) -> ActiveWindowState:
+        combined_title = f"{process_name} {title}".strip()
+        activity = cls._activity_for_window(combined_title.lower(), fullscreen)
+        return ActiveWindowState(
+            window_handle=window_handle,
+            process_id=process_id,
+            process_name=process_name,
+            title=title,
+            activity=activity,
+            app_source=cls._detect_app_source(combined_title.lower(), activity),
+            fullscreen=fullscreen,
+            error=error,
+        )
+
+    def _record_window_state(
+        self,
+        state: ActiveWindowState,
+    ) -> WindowChangeEvent | None:
+        with self._lock:
+            previous = self._active_window_state
+            self._active_window_state = state
+            if state.activity != self._current_activity:
+                self._last_activity = self._current_activity
+                self._current_activity = state.activity
+            if previous is None:
+                if state.activity == "idle_desktop":
+                    return None
+                previous = self._make_window_state("", None, None, "", False)
+                kind = "open"
+            elif previous.signature == state.signature:
+                return None
+            elif previous.activity != "idle_desktop" and state.activity == "idle_desktop":
+                kind = "close"
+            elif previous.process_id != state.process_id:
+                kind = "switch"
+            elif previous.window_handle != state.window_handle:
+                kind = "focus"
+            elif previous.title != state.title:
+                kind = "title"
+            else:
+                return None
+            return WindowChangeEvent(
+                previous=previous,
+                current=state,
+                kind=kind,
+                occurred_at=time.time(),
+            )
 
     @classmethod
     def _detect_activity(cls, title: str) -> str:
@@ -374,26 +578,49 @@ class SystemMonitor:
     def get_snapshot(self, refresh: bool = False) -> Telemetry:
         """Return the latest telemetry, optionally sampling synchronously."""
         if refresh:
-            snapshot = self.sample()
-            with self._lock:
-                self._snapshot = snapshot
-            return snapshot
+            return self.sample()
         with self._lock:
             snapshot = self._snapshot
         if snapshot is None:
             return self.get_snapshot(refresh=True)
         return snapshot
 
-    def start(self, callback: Callable[[Telemetry], None] | None = None) -> None:
-        """Start periodic sampling; calling start twice has no extra effect."""
+    @staticmethod
+    def _empty_snapshot() -> Telemetry:
+        now = time.time()
+        return Telemetry(
+            cpu_percent=0.0,
+            ram_percent=0.0,
+            battery_percent=None,
+            battery_plugged_in=None,
+            is_charging=None,
+            cpu_temperature_c=None,
+            system_temperature_c=None,
+            hour=datetime.now().hour,
+            late_night=False,
+            active_window_title="",
+            app_source="other",
+            window_changed=False,
+            activity="other",
+            last_activity=None,
+            fullscreen=False,
+            coding_detected=False,
+            sampled_at=now,
+        )
+
+    def start(
+        self,
+        callback: Callable[[Telemetry], None] | None = None,
+        window_callback: Callable[[WindowChangeEvent], None] | None = None,
+    ) -> None:
+        """Start background sampling without waiting for hardware or window APIs."""
         with self._lock:
             if self._thread is not None and self._thread.is_alive():
                 return
             self._stop_event.clear()
             self._callback = callback
-        snapshot = self.sample()
-        with self._lock:
-            self._snapshot = snapshot
+            self._window_callback = window_callback
+            self._snapshot = self._empty_snapshot()
             self._thread = threading.Thread(
                 target=self._run,
                 name="retro-pet-system-monitor",
@@ -402,13 +629,58 @@ class SystemMonitor:
             self._thread.start()
 
     def _run(self) -> None:
-        while not self._stop_event.wait(self.interval_seconds):
-            snapshot = self.sample()
-            with self._lock:
-                self._snapshot = snapshot
-                callback = self._callback
-            if callback is not None:
-                callback(snapshot)
+        next_window_sample = 0.0
+        next_hardware_sample = 0.0
+        while not self._stop_event.is_set():
+            now = time.monotonic()
+            if now >= next_window_sample:
+                state = self._read_active_window()
+                if state.error:
+                    with self._lock:
+                        previous = self._active_window_state
+                    if previous is not None:
+                        state = replace(previous, error=state.error)
+                event = self._record_window_state(state)
+                with self._lock:
+                    snapshot = self._snapshot or self._empty_snapshot()
+                    snapshot = replace(
+                        snapshot,
+                        active_window_title=state.title,
+                        app_source=state.app_source,
+                        activity=state.activity,
+                        last_activity=self._last_activity,
+                        window_handle=state.window_handle,
+                        process_id=state.process_id,
+                        process_name=state.process_name,
+                        fullscreen=state.fullscreen,
+                        coding_detected=state.activity == "coding",
+                        window_changed=event is not None,
+                        sampled_at=time.time(),
+                    )
+                    self._snapshot = snapshot
+                    window_callback = self._window_callback
+                if event is not None and window_callback is not None:
+                    window_callback(event)
+                next_window_sample = now + self.window_poll_interval_seconds
+
+            if now >= next_hardware_sample:
+                with self._lock:
+                    state = self._active_window_state
+                    callback = self._callback
+                if state is not None:
+                    snapshot = self._sample_telemetry(state, window_changed=False)
+                    with self._lock:
+                        self._snapshot = snapshot
+                    if callback is not None:
+                        callback(snapshot)
+                next_hardware_sample = now + self.interval_seconds
+
+            wait_seconds = min(
+                max(0.01, next_window_sample - time.monotonic()),
+                max(0.01, next_hardware_sample - time.monotonic()),
+            )
+            if self._stop_event.wait(wait_seconds):
+                break
 
     def stop(self, timeout: float = 2.0) -> None:
         """Stop the sampler and wait briefly for its worker thread to exit."""
@@ -419,3 +691,198 @@ class SystemMonitor:
             thread.join(timeout)
             if thread.is_alive():
                 raise RuntimeError("System monitor did not stop within the timeout.")
+
+
+class WindowsNotificationListener:
+    """Watch Windows toast notifications when the OS grants listener access."""
+
+    def __init__(
+        self,
+        callback: Callable[[SystemNotification], None],
+        status_callback: Callable[[str], None] | None = None,
+        poll_interval_seconds: float = 2.0,
+    ) -> None:
+        if poll_interval_seconds <= 0:
+            raise ValueError("Notification polling interval must be greater than zero.")
+        self._callback = callback
+        self._status_callback = status_callback
+        self._poll_interval_seconds = poll_interval_seconds
+        self._stop_event = threading.Event()
+        self._thread: threading.Thread | None = None
+        self._seen_ids: set[str] = set()
+
+    @staticmethod
+    def _stable_id(notification: object) -> str:
+        notification_id = getattr(notification, "id", None)
+        if notification_id is None:
+            raise ValueError("Windows notification did not provide an ID.")
+        app_info = getattr(notification, "app_info", None)
+        app_id = getattr(app_info, "app_user_model_id", "") if app_info is not None else ""
+        creation_time = getattr(notification, "creation_time", "")
+        return f"{app_id}:{notification_id}:{creation_time}"
+
+    @staticmethod
+    def _app_name(notification: object) -> str:
+        app_info = getattr(notification, "app_info", None)
+        if app_info is None:
+            return "An app"
+        display_info = getattr(app_info, "display_info", None)
+        name = getattr(display_info, "display_name", "") if display_info is not None else ""
+        return str(name or getattr(app_info, "app_user_model_id", "") or "An app")
+
+    def _to_event(self, notification: object) -> SystemNotification:
+        app_name = self._app_name(notification)
+        activity = SystemMonitor._detect_activity(app_name.lower())
+        source = (
+            SystemMonitor._detect_app_source(app_name.lower(), activity)
+            if activity != "other"
+            else "other"
+        )
+        return SystemNotification(
+            notification_id=self._stable_id(notification),
+            app_name=app_name,
+            source=source,
+        )
+
+    def start(self) -> None:
+        """Request access on the caller's UI thread, then watch in a worker."""
+        if sys.platform != "win32":
+            self._report_status("Windows notification listening is only available on Windows.")
+            return
+        if self._thread is not None and self._thread.is_alive():
+            return
+        try:
+            management = importlib.import_module(
+                "winsdk.windows.ui.notifications.management"
+            )
+            UserNotificationListener = management.UserNotificationListener
+            listener = UserNotificationListener.current
+            access_operation = listener.request_access_async()
+        except (ImportError, OSError, RuntimeError, AttributeError) as error:
+            self._report_status(f"Windows notification listener unavailable: {error}")
+            return
+        self._stop_event.clear()
+        self._thread = threading.Thread(
+            target=self._run,
+            args=(listener, access_operation),
+            name="retro-pet-windows-notifications",
+            daemon=True,
+        )
+        self._thread.start()
+
+    def _report_status(self, message: str) -> None:
+        if self._status_callback is not None:
+            self._status_callback(message)
+
+    def _run(self, listener: object, access_operation: object) -> None:
+        try:
+            asyncio.run(self._listen(listener, access_operation))
+        except Exception as error:
+            self._report_status(
+                f"Windows notification listener stopped: {type(error).__name__}: {error}"
+            )
+
+    async def _listen(self, listener: object, access_operation: object) -> None:
+        notifications_module = importlib.import_module(
+            "winsdk.windows.ui.notifications"
+        )
+        management_module = importlib.import_module(
+            "winsdk.windows.ui.notifications.management"
+        )
+        NotificationKinds = notifications_module.NotificationKinds
+        UserNotificationListenerAccessStatus = (
+            management_module.UserNotificationListenerAccessStatus
+        )
+
+        try:
+            access_status = await access_operation
+        except Exception as error:
+            self._report_status(
+                "Windows notification permission could not be checked. "
+                f"App and window detection will continue: {error}"
+            )
+            return
+        if access_status != UserNotificationListenerAccessStatus.ALLOWED:
+            self._report_status(
+                "Windows notification access is disabled or was not granted. "
+                "Enable notification access in Windows Settings to track toasts."
+            )
+            return
+
+        loop = asyncio.get_running_loop()
+        pending_ids: set[int] = set()
+        pending_lock = threading.Lock()
+        initializing = True
+
+        async def deliver_notification(notification_id: int) -> None:
+            try:
+                notification = await listener.get_notification(notification_id)
+            except Exception as error:
+                self._report_status(
+                    "A Windows notification could not be read; app and window "
+                    f"detection will continue: {error}"
+                )
+                return
+            if notification is not None:
+                self._deliver(notification)
+
+        def notification_changed(_sender: object, args: object) -> None:
+            change_kind = str(getattr(args, "change_kind", "")).lower()
+            notification_id = getattr(args, "user_notification_id", None)
+            if "added" not in change_kind or notification_id is None:
+                return
+            notification_id = int(notification_id)
+            with pending_lock:
+                if initializing:
+                    pending_ids.add(notification_id)
+                    return
+            loop.call_soon_threadsafe(
+                lambda: asyncio.create_task(deliver_notification(notification_id))
+            )
+
+        add_handler = getattr(listener, "add_notification_changed", None)
+        remove_handler = getattr(listener, "remove_notification_changed", None)
+        handler_registered = False
+        try:
+            if add_handler is not None:
+                add_handler(notification_changed)
+                handler_registered = True
+
+            existing = await listener.get_notifications_async(NotificationKinds.TOAST)
+            for notification in existing:
+                self._seen_ids.add(self._stable_id(notification))
+            with pending_lock:
+                initializing = False
+                pending = tuple(pending_ids)
+                pending_ids.clear()
+            for notification_id in pending:
+                await deliver_notification(notification_id)
+            self._report_status("Windows notification access is enabled.")
+
+            while not self._stop_event.is_set():
+                notifications = await listener.get_notifications_async(NotificationKinds.TOAST)
+                for notification in notifications:
+                    self._deliver(notification)
+                await asyncio.to_thread(
+                    self._stop_event.wait,
+                    self._poll_interval_seconds,
+                )
+        finally:
+            if handler_registered and remove_handler is not None:
+                remove_handler(notification_changed)
+
+    def _deliver(self, notification: object) -> None:
+        event = self._to_event(notification)
+        if event.notification_id in self._seen_ids:
+            return
+        self._seen_ids.add(event.notification_id)
+        self._callback(event)
+
+    def stop(self, timeout: float = 2.0) -> None:
+        """Stop the notification polling loop without blocking the UI."""
+        self._stop_event.set()
+        thread = self._thread
+        if thread is not None and thread.is_alive():
+            thread.join(timeout)
+            if thread.is_alive():
+                raise RuntimeError("Windows notification listener did not stop in time.")
